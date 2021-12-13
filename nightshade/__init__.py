@@ -22,16 +22,25 @@ def get_movies(search):
 
 
 def match_movie(movies, name, year=None):
-    def matches(m):
+    def matches_exact(m):
         target = m["name"].lower()
         search = name.lower()
 
-        name_matches = search == target or search in target
+        name_matches = search == target
         year_matches = year is None or year == m["year"]
 
         return name_matches and year_matches
 
-    return next(filter(matches, movies), None)
+    def matches_fuzzy(m):
+        target = m["name"].lower()
+        search = name.lower()
+
+        name_matches = search in target
+        year_matches = year is None or year == m["year"]
+
+        return name_matches and year_matches
+
+    return list(filter(matches_exact, movies)) or list(filter(matches_fuzzy, movies))
 
 
 def test_cli():
