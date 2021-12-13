@@ -7,6 +7,7 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
       in pkgs.mkShell {
         buildInputs = with pkgs.python38Packages; [
+          beautifulsoup4
           poetry
           requests
         ];
