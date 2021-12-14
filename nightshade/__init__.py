@@ -30,6 +30,27 @@ def get_movies(search):
             for r in results]
 
 
+def get_movie_data(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        raise RuntimeError("Bad request")
+
+    doc = BeautifulSoup(r.text, "html.parser")
+    print(doc.prettify())
+
+    scores = doc.find("score-board")
+    info = scores.find("p", attrs={"slot": "info"})
+    [_, genres, runtime] = info.text.split(", ")
+
+    return {
+        "audience": scores.get("audiencescore"),
+        "tomatometer": scores.get("tomatometerscore"),
+        "rating": scores.get("rating"),
+        "genres": genres.split("/"),
+        "runtime": runtime,
+    }
+
+
 def match_movie(movies, name, year=None):
     def matches_exact(m):
         target = m["name"].lower()
@@ -75,7 +96,13 @@ def test_cli():
         year = sys.argv[2]
 
     movies = get_movies(search)
-    print(match_movie(movies, search, year))
+    matches = match_movie(movies, search, year)
+
+    print(matches)
+
+    if len(matches) == 1:
+        data = get_movie_data(matches[0]["href"])
+        print(data)
 
     return 0
 
