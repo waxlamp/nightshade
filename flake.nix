@@ -8,6 +8,7 @@
       in pkgs.mkShell {
         buildInputs = with pkgs.python38Packages; [
           beautifulsoup4
+          nltk
           poetry
           requests
         ];

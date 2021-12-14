@@ -1,7 +1,16 @@
 from bs4 import BeautifulSoup
+import nltk
+import nltk.tokenize
 import requests
 import sys
 import urllib
+
+
+def is_subslice(subslice, full):
+    if len(subslice) > len(full):
+        return False
+
+    return full[:len(subslice)] == subslice or is_subslice(subslice, full[1:])
 
 
 def get_movies(search):
@@ -31,6 +40,15 @@ def match_movie(movies, name, year=None):
 
         return name_matches and year_matches
 
+    def matches_tokens(m):
+        target = nltk.tokenize.word_tokenize(m["name"].lower())
+        search = nltk.tokenize.word_tokenize(name.lower())
+
+        name_matches = is_subslice(search, target)
+        year_matches = year is None or year == m["year"]
+
+        return name_matches and year_matches
+
     def matches_fuzzy(m):
         target = m["name"].lower()
         search = name.lower()
@@ -40,7 +58,11 @@ def match_movie(movies, name, year=None):
 
         return name_matches and year_matches
 
-    return list(filter(matches_exact, movies)) or list(filter(matches_fuzzy, movies))
+    exact = list(filter(matches_exact, movies))
+    tokens = list(filter(matches_tokens, movies))
+    fuzzy = list(filter(matches_fuzzy, movies))
+
+    return exact or tokens or fuzzy
 
 
 def test_cli():
@@ -56,3 +78,7 @@ def test_cli():
     print(match_movie(movies, search, year))
 
     return 0
+
+
+def download_punkt():
+    nltk.download("punkt")
