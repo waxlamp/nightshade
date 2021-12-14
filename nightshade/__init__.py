@@ -36,11 +36,11 @@ def get_movie_data(url):
         raise RuntimeError("Bad request")
 
     doc = BeautifulSoup(r.text, "html.parser")
-    print(doc.prettify())
 
     scores = doc.find("score-board")
+    title = scores.find("h1", attrs={"slot": "title"}).string
     info = scores.find("p", attrs={"slot": "info"})
-    [_, genres, runtime] = info.text.split(", ")
+    [year, genres, runtime] = info.text.split(", ")
 
     return {
         "audience": scores.get("audiencescore"),
@@ -48,6 +48,9 @@ def get_movie_data(url):
         "rating": scores.get("rating"),
         "genres": genres.split("/"),
         "runtime": runtime,
+        "title": title,
+        "year": year,
+        "href": url,
     }
 
 
@@ -97,8 +100,6 @@ def test_cli():
 
     movies = get_movies(search)
     matches = match_movie(movies, search, year)
-
-    print(matches)
 
     if len(matches) == 1:
         data = get_movie_data(matches[0]["href"])
