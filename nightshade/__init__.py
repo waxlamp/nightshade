@@ -4,6 +4,7 @@ import nltk.tokenize
 import requests
 import pydantic
 import sys
+from typing import List
 import urllib
 
 
@@ -11,6 +12,14 @@ class MovieResult(pydantic.BaseModel):
     year: int
     title: str
     href: pydantic.HttpUrl
+
+
+class MovieData(MovieResult):
+    audience: int
+    tomatometer: int
+    rating: str
+    genres: List[str]
+    runtime: str
 
 
 def is_subslice(subslice, full):
@@ -46,16 +55,16 @@ def get_movie_data(url):
     info = scores.find("p", attrs={"slot": "info"})
     [year, genres, runtime] = info.text.split(", ")
 
-    return {
-        "audience": scores.get("audiencescore"),
-        "tomatometer": scores.get("tomatometerscore"),
-        "rating": scores.get("rating"),
-        "genres": genres.split("/"),
-        "runtime": runtime,
-        "title": title,
-        "year": year,
-        "href": url,
-    }
+    return MovieData(
+        audience=scores.get("audiencescore"),
+        tomatometer=scores.get("tomatometerscore"),
+        rating=scores.get("rating"),
+        genres=genres.split("/"),
+        runtime=runtime,
+        title=title,
+        year=year,
+        href=url,
+    )
 
 
 def match_movie(movies, name, year=None):
