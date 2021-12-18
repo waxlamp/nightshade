@@ -128,7 +128,7 @@ def test_cli():
 
     if len(matches) == 1:
         data = get_movie_data(matches[0].href)
-        print(data)
+        print(data.json())
 
     return 0
 
