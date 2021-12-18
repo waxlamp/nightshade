@@ -42,7 +42,8 @@ def compute_minutes(runtime):
 
 
 def get_movies(search):
-    url = f"https://www.rottentomatoes.com/search?search={urllib.parse.quote(search)}"
+    quoted_search = urllib.parse.quote(search)
+    url = f"https://www.rottentomatoes.com/search?search={quoted_search}"
 
     r = requests.get(url)
     if r.status_code != 200:
