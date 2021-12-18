@@ -10,6 +10,7 @@
           beautifulsoup4
           nltk
           poetry
+          pydantic
           requests
         ];
       };
