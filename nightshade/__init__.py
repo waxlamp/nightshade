@@ -3,6 +3,7 @@ import nltk
 import nltk.tokenize
 import requests
 import pydantic
+import re
 import sys
 from typing import List
 import urllib
@@ -19,7 +20,7 @@ class MovieData(MovieResult):
     tomatometer: int
     rating: str
     genres: List[str]
-    runtime: str
+    runtime: int
 
 
 def is_subslice(subslice, full):
@@ -27,6 +28,17 @@ def is_subslice(subslice, full):
         return False
 
     return full[:len(subslice)] == subslice or is_subslice(subslice, full[1:])
+
+
+def compute_minutes(runtime):
+    m = re.match(r"(?:(\d+)h )?(\d+)m", runtime)
+    if m is None:
+        return None
+
+    hours = int(m.group(1)) or 0
+    minutes = int(m.group(2)) or 0
+
+    return 60 * hours + minutes
 
 
 def get_movies(search):
@@ -60,7 +72,7 @@ def get_movie_data(url):
         tomatometer=scores.get("tomatometerscore"),
         rating=scores.get("rating"),
         genres=genres.split("/"),
-        runtime=runtime,
+        runtime=compute_minutes(runtime),
         title=title,
         year=year,
         href=url,
