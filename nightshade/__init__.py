@@ -5,7 +5,7 @@ import requests
 import pydantic
 import re
 import sys
-from typing import List
+from typing import List, Optional
 import urllib
 
 
@@ -16,8 +16,8 @@ class MovieResult(pydantic.BaseModel):
 
 
 class MovieData(MovieResult):
-    audience: int
-    tomatometer: int
+    audience: Optional[int]
+    tomatometer: Optional[int]
     rating: str
     genres: List[str]
     runtime: int
@@ -68,8 +68,8 @@ def get_movie_data(url):
     [year, genres, runtime] = info.text.split(", ")
 
     return MovieData(
-        audience=scores.get("audiencescore"),
-        tomatometer=scores.get("tomatometerscore"),
+        audience=scores.get("audiencescore") or None,
+        tomatometer=scores.get("tomatometerscore") or None,
         rating=scores.get("rating"),
         genres=genres.split("/"),
         runtime=compute_minutes(runtime),
