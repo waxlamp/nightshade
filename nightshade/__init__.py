@@ -2,8 +2,15 @@ from bs4 import BeautifulSoup
 import nltk
 import nltk.tokenize
 import requests
+import pydantic
 import sys
 import urllib
+
+
+class MovieResult(pydantic.BaseModel):
+    year: int
+    name: str
+    href: pydantic.HttpUrl
 
 
 def is_subslice(subslice, full):
@@ -24,10 +31,7 @@ def get_movies(search):
     slot = doc.find("search-page-result", attrs={"slot": "movie"})
     results = slot.find("ul").find_all("search-page-media-row")
 
-    return [{"year": r.get("releaseyear"),
-             "name": r.find_all("a")[1].string.strip(),
-             "href": r.find_all("a")[1].get("href")}
-            for r in results]
+    return [MovieResult(year=r.get("releaseyear"), name=r.find_all("a")[1].string.strip(), href=r.find_all("a")[1].get("href")) for r in results]
 
 
 def get_movie_data(url):
@@ -56,29 +60,29 @@ def get_movie_data(url):
 
 def match_movie(movies, name, year=None):
     def matches_exact(m):
-        target = m["name"].lower()
+        target = m.name.lower()
         search = name.lower()
 
         name_matches = search == target
-        year_matches = year is None or year == m["year"]
+        year_matches = year is None or year == m.year
 
         return name_matches and year_matches
 
     def matches_tokens(m):
-        target = nltk.tokenize.word_tokenize(m["name"].lower())
+        target = nltk.tokenize.word_tokenize(m.name.lower())
         search = nltk.tokenize.word_tokenize(name.lower())
 
         name_matches = is_subslice(search, target)
-        year_matches = year is None or year == m["year"]
+        year_matches = year is None or year == m.year
 
         return name_matches and year_matches
 
     def matches_fuzzy(m):
-        target = m["name"].lower()
+        target = m.name.lower()
         search = name.lower()
 
         name_matches = search in target
-        year_matches = year is None or year == m["year"]
+        year_matches = year is None or year == m.year
 
         return name_matches and year_matches
 
@@ -102,7 +106,7 @@ def test_cli():
     matches = match_movie(movies, search, year)
 
     if len(matches) == 1:
-        data = get_movie_data(matches[0]["href"])
+        data = get_movie_data(matches[0].href)
         print(data)
 
     return 0
