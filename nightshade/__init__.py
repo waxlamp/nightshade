@@ -9,7 +9,7 @@ import urllib
 
 class MovieResult(pydantic.BaseModel):
     year: int
-    name: str
+    title: str
     href: pydantic.HttpUrl
 
 
@@ -31,7 +31,7 @@ def get_movies(search):
     slot = doc.find("search-page-result", attrs={"slot": "movie"})
     results = slot.find("ul").find_all("search-page-media-row")
 
-    return [MovieResult(year=r.get("releaseyear"), name=r.find_all("a")[1].string.strip(), href=r.find_all("a")[1].get("href")) for r in results]
+    return [MovieResult(year=r.get("releaseyear"), title=r.find_all("a")[1].string.strip(), href=r.find_all("a")[1].get("href")) for r in results]
 
 
 def get_movie_data(url):
@@ -60,7 +60,7 @@ def get_movie_data(url):
 
 def match_movie(movies, name, year=None):
     def matches_exact(m):
-        target = m.name.lower()
+        target = m.title.lower()
         search = name.lower()
 
         name_matches = search == target
@@ -69,7 +69,7 @@ def match_movie(movies, name, year=None):
         return name_matches and year_matches
 
     def matches_tokens(m):
-        target = nltk.tokenize.word_tokenize(m.name.lower())
+        target = nltk.tokenize.word_tokenize(m.title.lower())
         search = nltk.tokenize.word_tokenize(name.lower())
 
         name_matches = is_subslice(search, target)
@@ -78,7 +78,7 @@ def match_movie(movies, name, year=None):
         return name_matches and year_matches
 
     def matches_fuzzy(m):
-        target = m.name.lower()
+        target = m.title.lower()
         search = name.lower()
 
         name_matches = search in target
