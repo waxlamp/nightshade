@@ -27,7 +27,7 @@ def is_subslice(subslice, full):
     if len(subslice) > len(full):
         return False
 
-    return full[:len(subslice)] == subslice or is_subslice(subslice, full[1:])
+    return full[: len(subslice)] == subslice or is_subslice(subslice, full[1:])
 
 
 def compute_minutes(runtime):
@@ -48,11 +48,18 @@ def get_movies(search):
     if r.status_code != 200:
         raise RuntimeError("Bad request")
 
-    doc = BeautifulSoup(r.text, 'html.parser')
+    doc = BeautifulSoup(r.text, "html.parser")
     slot = doc.find("search-page-result", attrs={"slot": "movie"})
     results = slot.find("ul").find_all("search-page-media-row")
 
-    return [MovieResult(year=r.get("releaseyear"), title=r.find_all("a")[1].string.strip(), href=r.find_all("a")[1].get("href")) for r in results]
+    return [
+        MovieResult(
+            year=r.get("releaseyear"),
+            title=r.find_all("a")[1].string.strip(),
+            href=r.find_all("a")[1].get("href"),
+        )
+        for r in results
+    ]
 
 
 def get_movie_data(url):
