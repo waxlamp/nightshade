@@ -1,12 +1,16 @@
 from bs4 import BeautifulSoup
-import nltk
-import nltk.tokenize
+from bs4.element import Tag
+import nltk  # type: ignore
+import nltk.tokenize  # type: ignore
 import requests
 import pydantic
 import re
 import sys
-from typing import List, Optional
-import urllib
+from typing import List, Optional, TypeVar
+import urllib.parse
+
+
+T = TypeVar("T")
 
 
 class MovieResult(pydantic.BaseModel):
@@ -22,15 +26,14 @@ class MovieData(MovieResult):
     genres: List[str]
     runtime: int
 
-
-def is_subslice(subslice, full):
+def is_subslice(subslice: List[T], full: List[T]) -> bool:
     if len(subslice) > len(full):
         return False
 
     return full[: len(subslice)] == subslice or is_subslice(subslice, full[1:])
 
 
-def compute_minutes(runtime):
+def compute_minutes(runtime: str) -> Optional[int]:
     m = re.match(r"(?:(\d+)h )?(\d+)m", runtime)
     if m is None:
         return None
@@ -41,7 +44,7 @@ def compute_minutes(runtime):
     return 60 * hours + minutes
 
 
-def get_movies(search):
+def get_movies(search: str) -> List[MovieResult]:
     quoted_search = urllib.parse.quote(search)
     url = f"https://www.rottentomatoes.com/search?search={quoted_search}"
 
@@ -50,8 +53,14 @@ def get_movies(search):
         raise RuntimeError("Bad request")
 
     doc = BeautifulSoup(r.text, "html.parser")
-    slot = doc.find("search-page-result", attrs={"slot": "movie"})
-    results = slot.find("ul").find_all("search-page-media-row")
+
+    if not isinstance(slot := doc.find("search-page-result", attrs={"slot": "movie"}), Tag):
+        raise RuntimeError("<search-page-result> element not found")
+
+    if not isinstance(ul := slot.find("ul"), Tag):
+        raise RuntimeError("<search-page-results> contains no <ul> for movie results")
+
+    results = ul.find_all("search-page-media-row")
 
     return [
         MovieResult(
@@ -63,16 +72,22 @@ def get_movies(search):
     ]
 
 
-def get_movie_data(url):
+def get_movie_data(url: str) -> MovieData:
     r = requests.get(url)
     if r.status_code != 200:
         raise RuntimeError("Bad request")
 
     doc = BeautifulSoup(r.text, "html.parser")
 
-    scores = doc.find("score-board")
-    title = scores.find("h1", attrs={"slot": "title"}).string
-    info = scores.find("p", attrs={"slot": "info"})
+    if not isinstance(scores := doc.find("score-board"), Tag):
+        raise RuntimeError("<score-board> not found")
+
+    if not isinstance(h1 := scores.find("h1", attrs={"slot": "title"}), Tag):
+        raise RuntimeError("<h1> not found")
+    title = h1.string
+
+    if not isinstance(info := scores.find("p", attrs={"slot": "info"}), Tag):
+        raise RuntimeError("<p> not found")
     [year, genres, runtime] = info.text.split(", ")
 
     return MovieData(
@@ -87,8 +102,8 @@ def get_movie_data(url):
     )
 
 
-def match_movie(movies, name, year=None):
-    def matches_exact(m):
+def match_movie(movies: List[MovieResult], name: str, year: Optional[int] = None) -> List[MovieResult]:
+    def matches_exact(m: MovieResult) -> bool:
         target = m.title.lower()
         search = name.lower()
 
@@ -97,7 +112,7 @@ def match_movie(movies, name, year=None):
 
         return name_matches and year_matches
 
-    def matches_tokens(m):
+    def matches_tokens(m: MovieResult) -> bool:
         target = nltk.tokenize.word_tokenize(m.title.lower())
         search = nltk.tokenize.word_tokenize(name.lower())
 
@@ -106,7 +121,7 @@ def match_movie(movies, name, year=None):
 
         return name_matches and year_matches
 
-    def matches_fuzzy(m):
+    def matches_fuzzy(m: MovieResult) -> bool:
         target = m.title.lower()
         search = name.lower()
 
@@ -122,14 +137,14 @@ def match_movie(movies, name, year=None):
     return exact or tokens or fuzzy
 
 
-def test_cli():
+def test_cli() -> None:
     search = "terminator 2"
     if len(sys.argv) > 1:
         search = sys.argv[1]
 
     year = None
     if len(sys.argv) > 2:
-        year = sys.argv[2]
+        year = int(sys.argv[2])
 
     movies = get_movies(search)
     matches = match_movie(movies, search, year)
@@ -138,8 +153,6 @@ def test_cli():
         data = get_movie_data(matches[0].href)
         print(data.json())
 
-    return 0
 
-
-def download_punkt():
+def download_punkt() -> None:
     nltk.download("punkt")
