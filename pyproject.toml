@@ -11,6 +11,7 @@ requests = "^2.26.0"
 beautifulsoup4 = "^4.10.0"
 nltk = "^3.6.5"
 pydantic = "^1.8.2"
+click = "^8.0.3"
 
 [tool.poetry.dev-dependencies]
 black = "21.7b"
@@ -22,7 +23,7 @@ types-beautifulsoup4 = "^4.10.5"
 taskipy = "^1.9.0"
 
 [tool.poetry.scripts]
-nightshade = "nightshade:test_cli"
+nightshade = "nightshade:nightshade"
 nightshade_prep = "nightshade:download_punkt"
 
 [tool.taskipy.tasks]

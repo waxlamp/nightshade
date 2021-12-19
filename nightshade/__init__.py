@@ -1,11 +1,13 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+import click
+import json
 import nltk
 import nltk.tokenize
 import requests
+from pprint import pprint
 import pydantic
 import re
-import sys
 from typing import List, Optional, TypeVar
 import urllib.parse
 
@@ -142,21 +144,27 @@ def match_movie(
     return exact or tokens or fuzzy
 
 
-def test_cli() -> None:
-    search = "terminator 2"
-    if len(sys.argv) > 1:
-        search = sys.argv[1]
+@click.group()
+def nightshade():
+    """A command suite for interacting with Rotten Tomatoes."""
+    pass
 
-    year = None
-    if len(sys.argv) > 2:
-        year = int(sys.argv[2])
 
-    movies = get_movies(search)
-    matches = match_movie(movies, search, year)
+@nightshade.command()
+@click.argument("search_phrase")
+@click.argument("year", required=False, type=int)
+def search(search_phrase: str, year: Optional[int]) -> None:
+    """
+    Search Rotten Tomatoes for movie data via SEARCH_PHRASE. An optional YEAR
+    can be given to narrow the search.
+    """
 
-    if len(matches) == 1:
-        data = get_movie_data(matches[0].href)
-        print(data.json())
+    movies = get_movies(search_phrase)
+    matches = match_movie(movies, search_phrase, year)
+
+    for movie in matches:
+        data = get_movie_data(movie.href)
+        pprint(json.loads(data.json()))
 
 
 def download_punkt() -> None:
