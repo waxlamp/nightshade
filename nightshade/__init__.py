@@ -144,10 +144,21 @@ def match_movie(
     return exact or tokens or fuzzy
 
 
-@click.command()
+@click.group()
+def nightshade():
+    """A command suite for interacting with Rotten Tomatoes."""
+    pass
+
+
+@nightshade.command()
 @click.argument("search_phrase")
 @click.argument("year", required=False, type=int)
-def nightshade(search_phrase: str, year: Optional[int]) -> None:
+def search(search_phrase: str, year: Optional[int]) -> None:
+    """
+    Search Rotten Tomatoes for movie data via SEARCH_PHRASE. An optional YEAR
+    can be given to narrow the search.
+    """
+
     movies = get_movies(search_phrase)
     matches = match_movie(movies, search_phrase, year)
 
