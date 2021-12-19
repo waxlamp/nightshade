@@ -61,7 +61,7 @@ def get_movies(search: str) -> List[MovieResult]:
         raise RuntimeError("<search-page-result> element not found")
 
     if not isinstance(ul := slot.find("ul"), Tag):
-        raise RuntimeError("<search-page-results> contains no <ul> for movie results")
+        raise RuntimeError("<ul> not found")
 
     results = ul.find_all("search-page-media-row")
 
