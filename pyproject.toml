@@ -13,10 +13,22 @@ nltk = "^3.6.5"
 pydantic = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
+black = "21.7b"
+flake8 = "^4.0.1"
+flake8-bugbear = "^21.11.29"
+mypy = "^0.920"
+types-requests = "^2.26.2"
+types-beautifulsoup4 = "^4.10.5"
+taskipy = "^1.9.0"
 
 [tool.poetry.scripts]
 nightshade = "nightshade:test_cli"
 nightshade_prep = "nightshade:download_punkt"
+
+[tool.taskipy.tasks]
+format = "black nightshade/"
+lint = "flake8"
+typecheck = "mypy --ignore-missing-imports --follow-imports=skip --strict-optional --disallow-untyped-defs ."
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
