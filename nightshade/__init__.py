@@ -169,7 +169,14 @@ def search(search_phrase: str, year: Optional[int]) -> None:
         pprint(json.loads(data.json()))
 
 
-def download_punkt() -> None:
+@nightshade.command()
+def prep() -> None:
+    """
+    Download tokenization models for use in `search` command.
+
+    You will only need to run this subcommand at most one time (if the
+    `nightshade search` command fails with an error about a missing NLTK model).
+    """
     nltk.download("punkt")
 
 

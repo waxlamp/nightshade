@@ -24,7 +24,6 @@ taskipy = "^1.9.0"
 
 [tool.poetry.scripts]
 nightshade = "nightshade:nightshade"
-nightshade_prep = "nightshade:download_punkt"
 
 [tool.taskipy.tasks]
 format = "black nightshade/"
