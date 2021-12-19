@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+import click
 import json
 import nltk
 import nltk.tokenize
@@ -7,7 +8,6 @@ import requests
 from pprint import pprint
 import pydantic
 import re
-import sys
 from typing import List, Optional, TypeVar
 import urllib.parse
 
@@ -144,17 +144,12 @@ def match_movie(
     return exact or tokens or fuzzy
 
 
-def nightshade() -> None:
-    search = "terminator 2"
-    if len(sys.argv) > 1:
-        search = sys.argv[1]
-
-    year = None
-    if len(sys.argv) > 2:
-        year = int(sys.argv[2])
-
-    movies = get_movies(search)
-    matches = match_movie(movies, search, year)
+@click.command()
+@click.argument("search_phrase")
+@click.argument("year", required=False, type=int)
+def nightshade(search_phrase: str, year: Optional[int]) -> None:
+    movies = get_movies(search_phrase)
+    matches = match_movie(movies, search_phrase, year)
 
     for movie in matches:
         data = get_movie_data(movie.href)
