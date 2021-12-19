@@ -11,6 +11,8 @@ import re
 from typing import List, Optional, TypeVar
 import urllib.parse
 
+from .notion import notion
+
 
 T = TypeVar("T")
 
@@ -145,7 +147,7 @@ def match_movie(
 
 
 @click.group()
-def nightshade():
+def nightshade() -> None:
     """A command suite for interacting with Rotten Tomatoes."""
     pass
 
@@ -169,3 +171,6 @@ def search(search_phrase: str, year: Optional[int]) -> None:
 
 def download_punkt() -> None:
     nltk.download("punkt")
+
+
+nightshade.add_command(notion)
