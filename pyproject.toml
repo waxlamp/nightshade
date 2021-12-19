@@ -22,7 +22,7 @@ types-beautifulsoup4 = "^4.10.5"
 taskipy = "^1.9.0"
 
 [tool.poetry.scripts]
-nightshade = "nightshade:test_cli"
+nightshade = "nightshade:nightshade"
 nightshade_prep = "nightshade:download_punkt"
 
 [tool.taskipy.tasks]

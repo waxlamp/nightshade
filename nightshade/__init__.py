@@ -144,7 +144,7 @@ def match_movie(
     return exact or tokens or fuzzy
 
 
-def test_cli() -> None:
+def nightshade() -> None:
     search = "terminator 2"
     if len(sys.argv) > 1:
         search = sys.argv[1]
