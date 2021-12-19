@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+import json
 import nltk
 import nltk.tokenize
 import requests
+from pprint import pprint
 import pydantic
 import re
 import sys
@@ -156,7 +158,7 @@ def test_cli() -> None:
 
     if len(matches) == 1:
         data = get_movie_data(matches[0].href)
-        print(data.json())
+        pprint(json.loads(data.json()))
 
 
 def download_punkt() -> None:
