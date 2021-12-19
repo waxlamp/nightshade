@@ -26,6 +26,7 @@ class MovieData(MovieResult):
     genres: List[str]
     runtime: int
 
+
 def is_subslice(subslice: List[T], full: List[T]) -> bool:
     if len(subslice) > len(full):
         return False
@@ -54,7 +55,9 @@ def get_movies(search: str) -> List[MovieResult]:
 
     doc = BeautifulSoup(r.text, "html.parser")
 
-    if not isinstance(slot := doc.find("search-page-result", attrs={"slot": "movie"}), Tag):
+    if not isinstance(
+        slot := doc.find("search-page-result", attrs={"slot": "movie"}), Tag
+    ):
         raise RuntimeError("<search-page-result> element not found")
 
     if not isinstance(ul := slot.find("ul"), Tag):
@@ -102,7 +105,9 @@ def get_movie_data(url: str) -> MovieData:
     )
 
 
-def match_movie(movies: List[MovieResult], name: str, year: Optional[int] = None) -> List[MovieResult]:
+def match_movie(
+    movies: List[MovieResult], name: str, year: Optional[int] = None
+) -> List[MovieResult]:
     def matches_exact(m: MovieResult) -> bool:
         target = m.title.lower()
         search = name.lower()
