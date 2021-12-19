@@ -156,8 +156,8 @@ def test_cli() -> None:
     movies = get_movies(search)
     matches = match_movie(movies, search, year)
 
-    if len(matches) == 1:
-        data = get_movie_data(matches[0].href)
+    for movie in matches:
+        data = get_movie_data(movie.href)
         pprint(json.loads(data.json()))
 
 
