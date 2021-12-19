@@ -152,7 +152,7 @@ def nightshade() -> None:
     pass
 
 
-@nightshade.command()
+@click.command()
 @click.argument("search_phrase")
 @click.argument("year", required=False, type=int)
 def search(search_phrase: str, year: Optional[int]) -> None:
@@ -169,7 +169,7 @@ def search(search_phrase: str, year: Optional[int]) -> None:
         pprint(json.loads(data.json()))
 
 
-@nightshade.command()
+@click.command()
 def prep() -> None:
     """
     Download tokenization models for use in `search` command.
@@ -180,4 +180,6 @@ def prep() -> None:
     nltk.download("punkt")
 
 
+nightshade.add_command(search)
+nightshade.add_command(prep)
 nightshade.add_command(notion)
