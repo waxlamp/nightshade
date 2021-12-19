@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-import nltk  # type: ignore
-import nltk.tokenize  # type: ignore
+import nltk
+import nltk.tokenize
 import requests
 import pydantic
 import re
