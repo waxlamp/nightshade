@@ -1,34 +1,18 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import click
-import json
 import nltk
 import nltk.tokenize
 import requests
-from pprint import pprint
-import pydantic
 import re
 from typing import List, Optional, TypeVar
 import urllib.parse
 
 from .notion import notion
+from .models import MovieData, MovieResult
 
 
 T = TypeVar("T")
-
-
-class MovieResult(pydantic.BaseModel):
-    year: int
-    title: str
-    href: pydantic.HttpUrl
-
-
-class MovieData(MovieResult):
-    audience: Optional[int]
-    tomatometer: Optional[int]
-    rating: str
-    genres: List[str]
-    runtime: int
 
 
 def is_subslice(subslice: List[T], full: List[T]) -> bool:
@@ -166,7 +150,7 @@ def search(search_phrase: str, year: Optional[int]) -> None:
 
     for movie in matches:
         data = get_movie_data(movie.href)
-        pprint(json.loads(data.json()))
+        print(data.json())
 
 
 @click.command()
@@ -175,7 +159,8 @@ def prep() -> None:
     Download tokenization models for use in `search` command.
 
     You will only need to run this subcommand at most one time (if the
-    `nightshade search` command fails with an error about a missing NLTK model).
+    `nightshade search` command fails with an error about a missing NLTK
+    model).
     """
     nltk.download("punkt")
 
