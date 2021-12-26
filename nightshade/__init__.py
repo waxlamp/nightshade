@@ -1,156 +1,15 @@
-from bs4 import BeautifulSoup
-from bs4.element import Tag
 import click
 import nltk
-import nltk.tokenize
-import requests
-import re
-from typing import List, Optional, TypeVar
-import urllib.parse
 
 from .notion import notion
-from .models import MovieData, MovieResult
-
-
-T = TypeVar("T")
-
-
-def is_subslice(subslice: List[T], full: List[T]) -> bool:
-    if len(subslice) > len(full):
-        return False
-
-    return full[: len(subslice)] == subslice or is_subslice(subslice, full[1:])
-
-
-def compute_minutes(runtime: str) -> Optional[int]:
-    m = re.match(r"(?:(\d+)h )?(\d+)m", runtime)
-    if m is None:
-        return None
-
-    hours = int(m.group(1)) or 0
-    minutes = int(m.group(2)) or 0
-
-    return 60 * hours + minutes
-
-
-def get_movies(search: str) -> List[MovieResult]:
-    quoted_search = urllib.parse.quote(search)
-    url = f"https://www.rottentomatoes.com/search?search={quoted_search}"
-
-    r = requests.get(url)
-    if r.status_code != 200:
-        raise RuntimeError("Bad request")
-
-    doc = BeautifulSoup(r.text, "html.parser")
-
-    if not isinstance(
-        slot := doc.find("search-page-result", attrs={"slot": "movie"}), Tag
-    ):
-        raise RuntimeError("<search-page-result> element not found")
-
-    if not isinstance(ul := slot.find("ul"), Tag):
-        raise RuntimeError("<ul> not found")
-
-    results = ul.find_all("search-page-media-row")
-
-    return [
-        MovieResult(
-            year=r.get("releaseyear"),
-            title=r.find_all("a")[1].string.strip(),
-            href=r.find_all("a")[1].get("href"),
-        )
-        for r in results
-    ]
-
-
-def get_movie_data(url: str) -> MovieData:
-    r = requests.get(url)
-    if r.status_code != 200:
-        raise RuntimeError("Bad request")
-
-    doc = BeautifulSoup(r.text, "html.parser")
-
-    if not isinstance(scores := doc.find("score-board"), Tag):
-        raise RuntimeError("<score-board> not found")
-
-    if not isinstance(h1 := scores.find("h1", attrs={"slot": "title"}), Tag):
-        raise RuntimeError("<h1> not found")
-    title = h1.string
-
-    if not isinstance(info := scores.find("p", attrs={"slot": "info"}), Tag):
-        raise RuntimeError("<p> not found")
-    [year, genres, runtime] = info.text.split(", ")
-
-    return MovieData(
-        audience=scores.get("audiencescore") or None,
-        tomatometer=scores.get("tomatometerscore") or None,
-        rating=scores.get("rating"),
-        genres=genres.split("/"),
-        runtime=compute_minutes(runtime),
-        title=title,
-        year=year,
-        href=url,
-    )
-
-
-def match_movie(
-    movies: List[MovieResult], name: str, year: Optional[int] = None
-) -> List[MovieResult]:
-    def matches_exact(m: MovieResult) -> bool:
-        target = m.title.lower()
-        search = name.lower()
-
-        name_matches = search == target
-        year_matches = year is None or year == m.year
-
-        return name_matches and year_matches
-
-    def matches_tokens(m: MovieResult) -> bool:
-        target = nltk.tokenize.word_tokenize(m.title.lower())
-        search = nltk.tokenize.word_tokenize(name.lower())
-
-        name_matches = is_subslice(search, target)
-        year_matches = year is None or year == m.year
-
-        return name_matches and year_matches
-
-    def matches_fuzzy(m: MovieResult) -> bool:
-        target = m.title.lower()
-        search = name.lower()
-
-        name_matches = search in target
-        year_matches = year is None or year == m.year
-
-        return name_matches and year_matches
-
-    exact = list(filter(matches_exact, movies))
-    tokens = list(filter(matches_tokens, movies))
-    fuzzy = list(filter(matches_fuzzy, movies))
-
-    return exact or tokens or fuzzy
+from .nirvana import nirvana
+from .search import search
 
 
 @click.group()
 def nightshade() -> None:
     """A command suite for interacting with Rotten Tomatoes."""
     pass
-
-
-@click.command()
-@click.argument("search_phrase")
-@click.argument("year", required=False, type=int)
-def search(search_phrase: str, year: Optional[int]) -> None:
-    """
-    Search Rotten Tomatoes for movie data via SEARCH_PHRASE. An optional YEAR
-    can be given to narrow the search.
-    """
-
-    movies = get_movies(search_phrase)
-    matches = match_movie(movies, search_phrase, year)
-
-    for movie in matches:
-        data = get_movie_data(movie.href)
-        print(data.json())
 
 
 @click.command()
@@ -168,3 +27,4 @@ def prep() -> None:
 nightshade.add_command(search)
 nightshade.add_command(prep)
 nightshade.add_command(notion)
+nightshade.add_command(nirvana)
