@@ -2,7 +2,7 @@ import click
 import nltk
 
 from .notion import notion
-from .nirvana import nirvana
+from .csv import csv
 from .search import search
 
 
@@ -27,4 +27,4 @@ def prep() -> None:
 nightshade.add_command(search)
 nightshade.add_command(prep)
 nightshade.add_command(notion)
-nightshade.add_command(nirvana)
+nightshade.add_command(csv)

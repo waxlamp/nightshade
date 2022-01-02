@@ -22,7 +22,7 @@ def get_year(text: str) -> Optional[int]:
 @click.option("-f", "--failure-file", type=click.Path(), required=True)
 @click.option("-s", "--success-file", type=click.Path(), required=True)
 @click.option("--skip", type=int, default=0)
-def nirvana(input_file, failure_file, success_file, skip):
+def csv(input_file, failure_file, success_file, skip):
     # Open the failure file for appending.
     with open(failure_file, "a") as fail:
         writer = csv.writer(fail)
