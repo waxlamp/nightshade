@@ -11,8 +11,15 @@ from .rottentomatoes import get_movies, get_movie_data, match_movie
 @click.option("-u", "--url", required=False)
 def search(search_phrase: Optional[str], year: Optional[int], url: Optional[str]) -> None:
     """
-    Search Rotten Tomatoes for movie data via SEARCH_PHRASE. An optional YEAR
-    can be given to narrow the search.
+    Search Rotten Tomatoes for movie data.
+
+    Either a SEARCH_PHRASE or URL must be supplied. Supplying SEARCH_PHRASE will
+    cause nightshade to search Rotten Tomatoes and print out JSON records for
+    search results. An optional YEAR will restrict the search to movies released
+    in that year. If URL is supplied, it must be a Rotten Tomatoes movie page;
+    nightshade will show a single search result for that movie. If YEAR and/or
+    SEARCH_PHRASE is also supplied, nightshade will only show the result if the
+    result's title and year also match the ones provided.
     """
 
     if search_phrase is None and url is None:
