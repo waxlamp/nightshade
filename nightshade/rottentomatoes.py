@@ -15,7 +15,7 @@ def compute_minutes(runtime: str) -> Optional[int]:
     if m is None:
         return None
 
-    hours = int(m.group(1)) or 0
+    hours = int(m.group(1)) if m.group(1) else 0
     minutes = int(m.group(2)) or 0
 
     return 60 * hours + minutes
@@ -34,7 +34,7 @@ def get_movies(search: str) -> List[MovieResult]:
     if not isinstance(
         slot := doc.find("search-page-result", attrs={"slot": "movie"}), Tag
     ):
-        raise RuntimeError("<search-page-result> element not found")
+        return []
 
     if not isinstance(ul := slot.find("ul"), Tag):
         raise RuntimeError("<ul> not found")
@@ -43,7 +43,7 @@ def get_movies(search: str) -> List[MovieResult]:
 
     return [
         MovieResult(
-            year=r.get("releaseyear"),
+            year=r.get("releaseyear") or None,
             title=r.find_all("a")[1].string.strip(),
             href=r.find_all("a")[1].get("href"),
         )
@@ -67,14 +67,29 @@ def get_movie_data(url: str) -> MovieData:
 
     if not isinstance(info := scores.find("p", attrs={"slot": "info"}), Tag):
         raise RuntimeError("<p> not found")
-    [year, genres, runtime] = info.text.split(", ")
+
+    # Analyze the info text.
+    year_text = None
+    genre_text = None
+    runtime_text = None
+    try:
+        [year_text, genre_text, runtime_text] = info.text.split(", ")
+    except ValueError:
+        try:
+            [genre_text, runtime_text] = info.text.split(", ")
+        except ValueError:
+            year_text = info.text
+
+    year = int(year_text) if year_text is not None else None
+    genres = genre_text.split("/") if genre_text is not None else []
+    runtime = compute_minutes(runtime_text) if runtime_text is not None else None
 
     return MovieData(
         audience=scores.get("audiencescore") or None,
         tomatometer=scores.get("tomatometerscore") or None,
         rating=scores.get("rating"),
-        genres=genres.split("/"),
-        runtime=compute_minutes(runtime),
+        genres=genres,
+        runtime=runtime,
         title=title,
         year=year,
         href=url,

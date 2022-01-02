@@ -3,7 +3,7 @@ from typing import List, Optional
 
 
 class MovieResult(pydantic.BaseModel):
-    year: int
+    year: Optional[int]
     title: str
     href: pydantic.HttpUrl
 
@@ -13,4 +13,4 @@ class MovieData(MovieResult):
     tomatometer: Optional[int]
     rating: str
     genres: List[str]
-    runtime: int
+    runtime: Optional[int]
