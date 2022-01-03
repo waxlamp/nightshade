@@ -19,7 +19,7 @@ def rt_to_moviedata(rt) -> MovieData:
         href=rt["Rotten Tomatoes URL"]["url"],
         audience=rt["Audience Score"]["number"],
         tomatometer=rt["Tomatometer"]["number"],
-        rating=rt["MPAA Rating"]["select"]["name"],
+        rating=rt["MPAA Rating"]["select"]["name"] if rt["MPAA Rating"]["select"] is not None else None,
         genres=[x["name"] for x in rt["Genre"]["multi_select"]],
         runtime=rt["Runtime"]["number"],
     )
@@ -95,52 +95,110 @@ def get_rows(database_id: str) -> List[MovieData]:
     return movies
 
 
-def create_row(database_id: str, movie: MovieData):
+def create_row(database_id: str, movie: MovieData, search: str, notes: str):
+    blocks = [
+        {
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {
+                "text": [
+                    {
+                        "type": "text",
+                        "text": {
+                            "content": "Original search phrase: ",
+                        },
+                        "annotations": {
+                            "bold": True,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": {
+                            "content": search,
+                        },
+                        "annotations": {
+                            "code": True,
+                        },
+                    },
+                ],
+            },
+        },
+    ]
+
+    if notes:
+        blocks += [
+            {
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                    "text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": text,
+                            },
+                        },
+                    ]
+                },
+            }
+            for text in notes.replace("\\n", "\n").split("\n\n")
+        ]
+
+    properties = {
+        "Title": {
+            "title": [
+                {
+                    "type": "text",
+                    "text": {
+                        "content": movie.title,
+                    },
+                },
+            ],
+        },
+        "Release Year": {
+            "number": movie.year,
+        },
+        "Rotten Tomatoes URL": {
+            "url": str(movie.href),
+        },
+        "Audience Score": {
+            "number": movie.audience,
+        },
+        "Tomatometer": {
+            "number": movie.tomatometer,
+        },
+        "Genre": {
+            "multi_select": [{"name": tag} for tag in movie.genres],
+        },
+        "Runtime": {
+            "number": movie.runtime,
+        },
+        "Status": {
+            "select": {
+                "name": "want to watch",
+            },
+        },
+    }
+
+    if movie.rating:
+        properties["MPAA Rating"] = {
+            "select": {
+                "name": movie.rating,
+            },
+        }
+
     api = notion_api("pages")
     result = s.post(api, data=json.dumps({
         "parent": {
             "type": "database_id",
             "database_id": database_id,
         },
-        "properties": {
-            "Title": {
-                "title": [
-                    {
-                        "type": "text",
-                        "text": {
-                            "content": movie.title,
-                        },
-                    },
-                ],
-            },
-            "Release Year": {
-                "number": movie.year,
-            },
-            "Rotten Tomatoes URL": {
-                "url": str(movie.href),
-            },
-            "Audience Score": {
-                "number": movie.audience,
-            },
-            "Tomatometer": {
-                "number": movie.tomatometer,
-            },
-            "MPAA Rating": {
-                "select": {
-                    "name": movie.rating,
-                },
-            },
-            "Genre": {
-                "multi_select": [{"name": tag} for tag in movie.genres],
-            },
-            "Runtime": {
-                "number": movie.runtime,
-            },
-        },
+        "properties": properties,
+        "children": blocks,
     }))
 
     if result.status_code != 200:
-        raise RuntimeError(result)
+        raise RuntimeError(result.text)
 
 
 @click.command()
@@ -182,15 +240,26 @@ def notion(input_file: click.Path, credential_file: click.Path, database_id: str
         sys.exit(1)
 
     # Create movie data models from the input.
-    movies = [MovieData.parse_raw(line) for line in input_stream]
+    def split_data(line):
+        rec = json.loads(line)
+        original = rec["original"]
+        notes = rec["notes"]
+        del rec["original"]
+        del rec["notes"]
+
+        return (rec, original, notes)
+
+    movies = [(MovieData.parse_obj(rec), original, notes) for (rec, original, notes) in map(split_data, input_stream)]
 
     # Retrieve all the movies in the Notion database.
     db_movies = get_rows(database_id)
 
     # Add the input movies to the database.
-    for m in movies:
+    for i, (m, orig, notes) in enumerate(movies):
         if str(m.href) in db_movies:
-            print(f"{m.title} ({m.year}) already in database, skipping", file=sys.stderr)
+            print(f"({i}) {m.title} ({m.year}) already in database, skipping", file=sys.stderr)
             continue
 
-        create_row(database_id, m)
+        print(f"({i}) Adding {m.title} ({m.year})...", end="", file=sys.stderr, flush=True)
+        create_row(database_id, m, orig, notes)
+        print("done")
