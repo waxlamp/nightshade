@@ -27,7 +27,7 @@ nightshade = "nightshade:nightshade"
 
 [tool.taskipy.tasks]
 format = "black nightshade/"
-lint = "flake8"
+lint = "flake8 --max-line-length=88"
 typecheck = "mypy --ignore-missing-imports --follow-imports=skip --strict-optional --disallow-untyped-defs ."
 
 [build-system]

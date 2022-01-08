@@ -9,7 +9,9 @@ from .rottentomatoes import get_movies, get_movie_data, match_movie
 @click.option("-s", "--search-phrase", required=False)
 @click.option("-y", "--year", required=False, type=int)
 @click.option("-u", "--url", required=False)
-def search(search_phrase: Optional[str], year: Optional[int], url: Optional[str]) -> None:
+def search(
+    search_phrase: Optional[str], year: Optional[int], url: Optional[str]
+) -> None:
     """
     Search Rotten Tomatoes for movie data.
 
@@ -22,12 +24,11 @@ def search(search_phrase: Optional[str], year: Optional[int], url: Optional[str]
     result's title and year also match the ones provided.
     """
 
+    matches = []
     if search_phrase is None and url is None:
         print("At least one of SEARCH_PHRASE or URL must be specified", file=sys.stderr)
-        return 1
-
-    matches = None
-    if search_phrase:
+        sys.exit(1)
+    elif search_phrase:
         # If there's a search phrase, run the search.
         movies = get_movies(search_phrase)
         matches = match_movie(movies, search_phrase, year)
@@ -35,8 +36,10 @@ def search(search_phrase: Optional[str], year: Optional[int], url: Optional[str]
         # If there's also a URL, then filter the search results by that URL (and
         # also the year, if specified).
         if url:
-            matches = [m for m in matches if m.href == url and (year is None or m.year == year)]
-    else:
+            matches = [
+                m for m in matches if m.href == url and (year is None or m.year == year)
+            ]
+    elif url:
         # If there's only a URL, then collect that movie into the "search
         # results".
         matches = [get_movie_data(url)]
