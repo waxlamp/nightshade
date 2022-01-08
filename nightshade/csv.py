@@ -18,11 +18,38 @@ def get_year(text: str) -> Optional[int]:
 
 
 @click.command()
-@click.option("-i", "--input-file", type=click.Path(), required=True, help="CSV file containing movie search terms (see above)")
-@click.option("-f", "--failure-file", type=click.Path(), required=True, help="Failure records file (see above)")
-@click.option("-s", "--success-file", type=click.Path(), required=True, help="Success records file (see above)")
-@click.option("--skip", type=int, default=0, help="The number of input records to skip (default: 0)")
-@click.option("--force/--no-force", default=False, help="Overwrite failure and success files if they already exist")
+@click.option(
+    "-i",
+    "--input-file",
+    type=click.Path(),
+    required=True,
+    help="CSV file containing movie search terms (see above)",
+)
+@click.option(
+    "-f",
+    "--failure-file",
+    type=click.Path(),
+    required=True,
+    help="Failure records file (see above)",
+)
+@click.option(
+    "-s",
+    "--success-file",
+    type=click.Path(),
+    required=True,
+    help="Success records file (see above)",
+)
+@click.option(
+    "--skip",
+    type=int,
+    default=0,
+    help="The number of input records to skip (default: 0)",
+)
+@click.option(
+    "--force/--no-force",
+    default=False,
+    help="Overwrite failure and success files if they already exist",
+)
 def csv(input_file, failure_file, success_file, skip, force):
     """
     Bulk process movie titles, years, and/or Rotten Tomatoes URLs.
@@ -98,13 +125,28 @@ def csv(input_file, failure_file, success_file, skip, force):
                         matches = None
                         year_text = "" if year is None else f" ({year})"
                         if url:
-                            print(f"({i}) Retrieving data from {url} for '{title}{year_text}'...", end="", file=sys.stderr, flush=True)
+                            print(
+                                f"({i}) Retrieving data from {url} for '{title}{year_text}'...",
+                                end="",
+                                file=sys.stderr,
+                                flush=True,
+                            )
                             movie = get_movie_data(url)
-                            matches = [movie] if movie.title == title and (year is None or movie.year == year) else []
+                            matches = (
+                                [movie]
+                                if movie.title == title
+                                and (year is None or movie.year == year)
+                                else []
+                            )
                             print("done", file=sys.stderr)
                         else:
                             # Perform a search for the title.
-                            print(f"({i}) Searching for '{title}{year_text}'...", end="", file=sys.stderr, flush=True)
+                            print(
+                                f"({i}) Searching for '{title}{year_text}'...",
+                                end="",
+                                file=sys.stderr,
+                                flush=True,
+                            )
                             movies = get_movies(title)
                             matches = match_movie(movies, title, year)
                             print("done", file=sys.stderr)
@@ -120,11 +162,17 @@ def csv(input_file, failure_file, success_file, skip, force):
 
                             if len(matches) == 0:
                                 if url:
-                                    print(f"    {movie.title},{movie.year},{url},{notes}", file=fail)
+                                    print(
+                                        f"    {movie.title},{movie.year},{url},{notes}",
+                                        file=fail,
+                                    )
                                 else:
                                     print("    (no matches found)", file=fail)
                             else:
                                 for m in matches:
-                                    print(f"    {m.title},{m.year},{url},{notes}", file=fail)
+                                    print(
+                                        f"    {m.title},{m.year},{url},{notes}",
+                                        file=fail,
+                                    )
     except FileExistsError as e:
         print(f"error: {e}", file=sys.stderr)

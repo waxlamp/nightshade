@@ -9,7 +9,9 @@ from .rottentomatoes import get_movies, get_movie_data, match_movie
 @click.option("-s", "--search-phrase", required=False)
 @click.option("-y", "--year", required=False, type=int)
 @click.option("-u", "--url", required=False)
-def search(search_phrase: Optional[str], year: Optional[int], url: Optional[str]) -> None:
+def search(
+    search_phrase: Optional[str], year: Optional[int], url: Optional[str]
+) -> None:
     """
     Search Rotten Tomatoes for movie data.
 
@@ -35,7 +37,9 @@ def search(search_phrase: Optional[str], year: Optional[int], url: Optional[str]
         # If there's also a URL, then filter the search results by that URL (and
         # also the year, if specified).
         if url:
-            matches = [m for m in matches if m.href == url and (year is None or m.year == year)]
+            matches = [
+                m for m in matches if m.href == url and (year is None or m.year == year)
+            ]
     else:
         # If there's only a URL, then collect that movie into the "search
         # results".
