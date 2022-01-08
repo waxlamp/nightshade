@@ -2,6 +2,7 @@ import csv as csvv
 import click
 import json
 import sys
+import time
 from typing import Optional
 
 from .rottentomatoes import get_movies, get_movie_data, match_movie
@@ -50,8 +51,19 @@ def get_year(text: str) -> Optional[int]:
     default=False,
     help="Overwrite failure and success files if they already exist",
 )
+@click.option(
+    "--rate-limit",
+    type=int,
+    default=15,
+    help="Number of seconds to pause between queries to Rotten Tomatoes (default: 15)",
+)
 def csv(
-    input_file: str, failure_file: str, success_file: str, skip: bool, force: bool
+    input_file: str,
+    failure_file: str,
+    success_file: str,
+    skip: bool,
+    force: bool,
+    rate_limit: int,
 ) -> None:
     """
     Bulk process movie titles, years, and/or Rotten Tomatoes URLs.
@@ -174,5 +186,8 @@ def csv(
                                 f"    {m.title},{m.year},{url},{notes}",
                                 file=fail,
                             )
+
+                # Pause to rate limit RT queries.
+                time.sleep(rate_limit)
     except FileExistsError as e:
         print(f"error: {e}", file=sys.stderr)
