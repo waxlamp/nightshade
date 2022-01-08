@@ -11,6 +11,6 @@ class MovieResult(pydantic.BaseModel):
 class MovieData(MovieResult):
     audience: Optional[int]
     tomatometer: Optional[int]
-    rating: str
+    rating: Optional[str]
     genres: List[str]
     runtime: Optional[int]
