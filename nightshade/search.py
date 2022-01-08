@@ -24,12 +24,11 @@ def search(
     result's title and year also match the ones provided.
     """
 
+    matches = []
     if search_phrase is None and url is None:
         print("At least one of SEARCH_PHRASE or URL must be specified", file=sys.stderr)
-        return 1
-
-    matches = None
-    if search_phrase:
+        sys.exit(1)
+    elif search_phrase:
         # If there's a search phrase, run the search.
         movies = get_movies(search_phrase)
         matches = match_movie(movies, search_phrase, year)
@@ -40,7 +39,7 @@ def search(
             matches = [
                 m for m in matches if m.href == url and (year is None or m.year == year)
             ]
-    else:
+    elif url:
         # If there's only a URL, then collect that movie into the "search
         # results".
         matches = [get_movie_data(url)]

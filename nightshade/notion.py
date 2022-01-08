@@ -3,7 +3,7 @@ import json
 import os
 import requests
 import sys
-from typing import List
+from typing import Dict, Tuple
 
 from .models import MovieData
 
@@ -12,7 +12,9 @@ from pprint import pprint
 s = requests.Session()
 
 
-def rt_to_moviedata(rt) -> MovieData:
+# It's not worth the complexity to cook up the right TypedDict definition for
+# the `rt` argument; see https://github.com/python/mypy/issues/5149.
+def rt_to_moviedata(rt: Dict) -> MovieData:
     return MovieData(
         title=rt["Title"]["title"][0]["plain_text"],
         year=rt["Release Year"]["number"],
@@ -31,31 +33,7 @@ def notion_api(path: str) -> str:
     return f"https://api.notion.com/v1/{path}"
 
 
-def find_entry(database_id: str, url: str) -> List[str]:
-    # Hit the database looking for the specific movie.
-    api = notion_api(f"databases/{database_id}/query")
-    result = s.post(
-        api,
-        data=json.dumps(
-            {"filter": {"property": "Rotten Tomatoes URL", "text": {"equals": url}}}
-        ),
-    )
-
-    # Bail out if the request fails.
-    if result.status_code != 200:
-        raise RuntimeError(result.text)
-
-    # Gather the results. There should only be one or zero.
-    results = result.json()["results"]
-    if len(results) == 0:
-        return None
-    elif len(results) == 1:
-        return results[0]
-    else:
-        raise RuntimeError("too many results")
-
-
-def get_rows(database_id: str) -> List[MovieData]:
+def get_rows(database_id: str) -> Dict[str, MovieData]:
     # Iterate through the pages of rows in the database.
     api = notion_api(f"databases/{database_id}/query")
     result = s.post(
@@ -107,7 +85,7 @@ def get_rows(database_id: str) -> List[MovieData]:
     return movies
 
 
-def create_row(database_id: str, movie: MovieData, search: str, notes: str):
+def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> None:
     blocks = [
         {
             "object": "block",
@@ -261,19 +239,16 @@ def notion(
         sys.exit(1)
 
     # Create movie data models from the input.
-    def split_data(line):
+    def split_data(line: str) -> Tuple[MovieData, str, str]:
         rec = json.loads(line)
         original = rec["original"]
         notes = rec["notes"]
         del rec["original"]
         del rec["notes"]
 
-        return (rec, original, notes)
+        return (MovieData.parse_obj(rec), original, notes)
 
-    movies = [
-        (MovieData.parse_obj(rec), original, notes)
-        for (rec, original, notes) in map(split_data, input_stream)
-    ]
+    movies = [split_data(line) for line in input_stream]
 
     # Retrieve all the movies in the Notion database.
     db_movies = get_rows(database_id)

@@ -50,7 +50,9 @@ def get_year(text: str) -> Optional[int]:
     default=False,
     help="Overwrite failure and success files if they already exist",
 )
-def csv(input_file, failure_file, success_file, skip, force):
+def csv(
+    input_file: str, failure_file: str, success_file: str, skip: bool, force: bool
+) -> None:
     """
     Bulk process movie titles, years, and/or Rotten Tomatoes URLs.
 
