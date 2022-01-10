@@ -3,11 +3,10 @@ import json
 import os
 import requests
 import sys
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Set
 
 from .models import MovieData
 
-from pprint import pprint
 
 s = requests.Session()
 
@@ -33,7 +32,7 @@ def notion_api(path: str) -> str:
     return f"https://api.notion.com/v1/{path}"
 
 
-def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieData]:
+def get_dupes(database_id: str) -> Set[str]:
     # Iterate through the pages of rows in the database.
     api = notion_api(f"databases/{database_id}/query")
     result = s.post(
@@ -45,7 +44,6 @@ def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieDat
         ),
     )
 
-    movies = {}
     names = set()
     dupes = set()
 
@@ -63,6 +61,44 @@ def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieDat
                 dupes.add(href)
             names.add(href)
 
+        if not results["has_more"]:
+            break
+
+        result = s.post(
+            api,
+            data=json.dumps(
+                {
+                    "page_size": 100,
+                    "start_cursor": results["next_cursor"],
+                }
+            ),
+        )
+
+    return dupes
+
+
+def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieData]:
+    # Iterate through the pages of rows in the database.
+    api = notion_api(f"databases/{database_id}/query")
+    result = s.post(
+        api,
+        data=json.dumps(
+            {
+                "page_size": 100,
+            }
+        ),
+    )
+
+    movies = {}
+
+    while True:
+        if result.status_code != 200:
+            raise RuntimeError("something went wrong")
+
+        results = result.json()
+
+        new = [rt_to_moviedata(r["properties"]) for r in results["results"]]
+
         movies.update({str(x.href): x for x in new})
 
         if not results["has_more"]:
@@ -77,12 +113,6 @@ def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieDat
                 }
             ),
         )
-
-    if report_dupes:
-        for dupe in dupes:
-            print(dupe)
-
-        return bool(dupes)
 
     return movies
 
@@ -204,7 +234,10 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 @click.option("-d", "--database-id", type=str, required=True)
 @click.option("--check-dupes/--no-check-dupes", default=False)
 def notion(
-    input_file: click.Path, credential_file: click.Path, database_id: str, check_dupes: bool
+    input_file: click.Path,
+    credential_file: click.Path,
+    database_id: str,
+    check_dupes: bool,
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
@@ -233,8 +266,11 @@ def notion(
     )
 
     if check_dupes:
-        found_dupes = get_rows(database_id, True)
-        sys.exit(1 if found_dupes else 0)
+        dupes = get_dupes(database_id)
+        for dupe in dupes:
+            print(dupe)
+
+        sys.exit(1 if dupes else 0)
 
     # Open the input file for reading.
     input_stream = sys.stdin
