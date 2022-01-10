@@ -78,9 +78,11 @@ def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieDat
             ),
         )
 
-    if report_dupes and dupes:
-        pprint(dupes)
-        raise RuntimeError("dupes")
+    if report_dupes:
+        for dupe in dupes:
+            print(dupe)
+
+        return bool(dupes)
 
     return movies
 
@@ -200,8 +202,9 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 @click.option("-i", "--input", "input_file", type=click.Path())
 @click.option("-c", "--credential-file", type=click.Path())
 @click.option("-d", "--database-id", type=str, required=True)
+@click.option("--check-dupes/--no-check-dupes", default=False)
 def notion(
-    input_file: click.Path, credential_file: click.Path, database_id: str
+    input_file: click.Path, credential_file: click.Path, database_id: str, check_dupes: bool
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
@@ -228,6 +231,10 @@ def notion(
             "Content-Type": "application/json",
         }
     )
+
+    if check_dupes:
+        found_dupes = get_rows(database_id, True)
+        sys.exit(1 if found_dupes else 0)
 
     # Open the input file for reading.
     input_stream = sys.stdin
