@@ -33,7 +33,7 @@ def notion_api(path: str) -> str:
     return f"https://api.notion.com/v1/{path}"
 
 
-def get_rows(database_id: str) -> Dict[str, MovieData]:
+def get_rows(database_id: str, report_dupes: bool = False) -> Dict[str, MovieData]:
     # Iterate through the pages of rows in the database.
     api = notion_api(f"databases/{database_id}/query")
     result = s.post(
@@ -78,7 +78,7 @@ def get_rows(database_id: str) -> Dict[str, MovieData]:
             ),
         )
 
-    if dupes:
+    if report_dupes and dupes:
         pprint(dupes)
         raise RuntimeError("dupes")
 
