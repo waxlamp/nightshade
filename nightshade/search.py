@@ -1,4 +1,5 @@
 import click
+import json
 import sys
 from typing import Optional
 
@@ -9,8 +10,9 @@ from .rottentomatoes import get_movies, get_movie_data, match_movie
 @click.option("-s", "--search-phrase", required=False)
 @click.option("-y", "--year", required=False, type=int)
 @click.option("-u", "--url", required=False)
+@click.option("-n", "--notes", default="")
 def search(
-    search_phrase: Optional[str], year: Optional[int], url: Optional[str]
+    search_phrase: Optional[str], year: Optional[int], url: Optional[str], notes: str
 ) -> None:
     """
     Search Rotten Tomatoes for movie data.
@@ -21,7 +23,9 @@ def search(
     in that year. If URL is supplied, it must be a Rotten Tomatoes movie page;
     nightshade will show a single search result for that movie. If YEAR and/or
     SEARCH_PHRASE is also supplied, nightshade will only show the result if the
-    result's title and year also match the ones provided.
+    result's title and year also match the ones provided. An optional NOTES will
+    append that content to the Notion entry (if the output is passed to
+    `nightshade notion`).
     """
 
     matches = []
@@ -46,5 +50,8 @@ def search(
 
     # Print the matches.
     for movie in matches:
-        data = get_movie_data(movie.href)
-        print(data.json())
+        data = get_movie_data(movie.href).dict()
+        data["notes"] = notes
+        data["original"] = search_phrase or ""
+
+        print(json.dumps(data))
