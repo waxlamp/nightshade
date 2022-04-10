@@ -203,8 +203,9 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 @click.option("-c", "--credential-file", type=click.Path())
 @click.option("-d", "--database-id", "database_id_opt", type=str)
 @click.option("--config", "config_file", type=click.Path())
+@click.option("--dry-run", is_flag=True)
 def notion(
-    input_file: click.Path, credential_file: click.Path, database_id_opt: str, config_file: Optional[click.Path]
+    input_file: click.Path, credential_file: click.Path, database_id_opt: str, config_file: Optional[click.Path], dry_run: bool
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
@@ -290,7 +291,8 @@ def notion(
             continue
 
         print(
-            f"({i}) Adding {m.title} ({m.year})...", end="", file=sys.stderr, flush=True
+            f"({i}) {'Pretending to add' if dry_run else 'Adding'} {m.title} ({m.year})...", end="", file=sys.stderr, flush=True
         )
-        create_row(database_id, m, orig, notes)
+        if not dry_run:
+            create_row(database_id, m, orig, notes)
         print("done")
