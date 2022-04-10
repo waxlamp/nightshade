@@ -1,9 +1,11 @@
 import click
 import json
 import os
+import pathlib
 import requests
 import sys
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
+import yaml
 
 from .models import MovieData
 
@@ -198,24 +200,55 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 
 @click.command()
 @click.option("-i", "--input", "input_file", type=click.Path())
-@click.option("-c", "--credential-file", type=click.Path())
-@click.option("-d", "--database-id", type=str, required=True)
+@click.option("-d", "--database-id", "database_id_opt", type=str)
+@click.option("-c", "--config", "config_file", type=click.Path())
+@click.option("--dry-run", is_flag=True)
 def notion(
-    input_file: click.Path, credential_file: click.Path, database_id: str
+    input_file: click.Path,
+    database_id_opt: str,
+    config_file: Optional[click.Path],
+    dry_run: bool,
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
     """
 
-    # Check for Notion credentials.
-    notion_key = os.getenv("NIGHTSHADE_NOTION_KEY")
-    if credential_file:
-        with open(credential_file) as f:
-            notion_key = f.read().strip()
+    # Read in the config.
+    config_path = (
+        config_file
+        or pathlib.Path(os.getenv("HOME")) / ".config" / "nightshade" / "config.yaml"
+    )
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"config file at {config_path} not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Check for Notion credentials. Start with the config file, and override
+    # through the environment variable and the command line option.
+    notion_key = config.get("notion_key")
+
+    if evar_notion_key := os.getenv("NIGHTSHADE_NOTION_KEY"):
+        notion_key = evar_notion_key
 
     if notion_key is None:
         print(
-            "No credential file specified, and NIGHTSHADE_NOTION_KEY not set",
+            "No Notion key specified (checked config file, environment "
+            "variable NIGHTSHADE_NOTION_KEY, and command line arguments",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Get the Notion database identifier, either from the config file or the
+    # command line.
+    database_id = config.get("database_id")
+    if database_id_opt:
+        database_id = database_id_opt
+
+    if database_id is None:
+        print(
+            "No database ID specified (checked config file and command line arguments)",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -263,7 +296,12 @@ def notion(
             continue
 
         print(
-            f"({i}) Adding {m.title} ({m.year})...", end="", file=sys.stderr, flush=True
+            f"({i}) {'Pretending to add' if dry_run else 'Adding'} "
+            f"{m.title} ({m.year})...",
+            end="",
+            file=sys.stderr,
+            flush=True,
         )
-        create_row(database_id, m, orig, notes)
+        if not dry_run:
+            create_row(database_id, m, orig, notes)
         print("done")
