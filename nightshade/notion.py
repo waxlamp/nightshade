@@ -204,14 +204,20 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 @click.option("-c", "--config", "config_file", type=click.Path())
 @click.option("--dry-run", is_flag=True)
 def notion(
-    input_file: click.Path, database_id_opt: str, config_file: Optional[click.Path], dry_run: bool
+    input_file: click.Path,
+    database_id_opt: str,
+    config_file: Optional[click.Path],
+    dry_run: bool,
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
     """
 
     # Read in the config.
-    config_path = config_file or pathlib.Path(os.getenv("HOME")) / ".config" / "nightshade" / "config.yaml"
+    config_path = (
+        config_file
+        or pathlib.Path(os.getenv("HOME")) / ".config" / "nightshade" / "config.yaml"
+    )
     try:
         with open(config_path) as f:
             config = yaml.safe_load(f)
@@ -228,7 +234,8 @@ def notion(
 
     if notion_key is None:
         print(
-            "No Notion key specified (checked config file, environment variable NIGHTSHADE_NOTION_KEY, and command line arguments",
+            "No Notion key specified (checked config file, environment "
+            "variable NIGHTSHADE_NOTION_KEY, and command line arguments",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -240,7 +247,10 @@ def notion(
         database_id = database_id_opt
 
     if database_id is None:
-        print("No database ID specified (checked config file and command line arguments)", file=sys.stderr)
+        print(
+            "No database ID specified (checked config file and command line arguments)",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Update the session object with the necessary headers.
@@ -286,7 +296,11 @@ def notion(
             continue
 
         print(
-            f"({i}) {'Pretending to add' if dry_run else 'Adding'} {m.title} ({m.year})...", end="", file=sys.stderr, flush=True
+            f"({i}) {'Pretending to add' if dry_run else 'Adding'} "
+            f"{m.title} ({m.year})...",
+            end="",
+            file=sys.stderr,
+            flush=True,
         )
         if not dry_run:
             create_row(database_id, m, orig, notes)
