@@ -219,13 +219,20 @@ def notion(
         print(f"config file at {config_path} not found", file=sys.stderr)
         sys.exit(1)
 
+    # Check for Notion credentials. Start with the config file, and override
+    # through the environment variable and the command line option.
+    notion_key = config.get("notion_key")
+
+    if evar_notion_key := os.getenv("NIGHTSHADE_NOTION_KEY"):
+        notion_key = evar_notion_key
+
     if credential_file:
         with open(credential_file) as f:
             notion_key = f.read().strip()
 
     if notion_key is None:
         print(
-            "No credential file specified, and NIGHTSHADE_NOTION_KEY not set",
+            "No Notion key specified (checked config file, environment variable NIGHTSHADE_NOTION_KEY, and command line arguments",
             file=sys.stderr,
         )
         sys.exit(1)
