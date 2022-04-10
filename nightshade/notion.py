@@ -1,9 +1,11 @@
 import click
 import json
 import os
+import pathlib
 import requests
 import sys
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
+import yaml
 
 from .models import MovieData
 
@@ -200,15 +202,23 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 @click.option("-i", "--input", "input_file", type=click.Path())
 @click.option("-c", "--credential-file", type=click.Path())
 @click.option("-d", "--database-id", type=str, required=True)
+@click.option("--config", "config_file", type=click.Path())
 def notion(
-    input_file: click.Path, credential_file: click.Path, database_id: str
+    input_file: click.Path, credential_file: click.Path, database_id: str, config_file: Optional[click.Path]
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
     """
 
-    # Check for Notion credentials.
-    notion_key = os.getenv("NIGHTSHADE_NOTION_KEY")
+    # Read in the config.
+    config_path = config_file or pathlib.Path(os.getenv("HOME")) / ".config" / "nightshade" / "config.yaml"
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"config file at {config_path} not found", file=sys.stderr)
+        sys.exit(1)
+
     if credential_file:
         with open(credential_file) as f:
             notion_key = f.read().strip()
