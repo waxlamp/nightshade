@@ -201,10 +201,10 @@ def create_row(database_id: str, movie: MovieData, search: str, notes: str) -> N
 @click.command()
 @click.option("-i", "--input", "input_file", type=click.Path())
 @click.option("-c", "--credential-file", type=click.Path())
-@click.option("-d", "--database-id", type=str, required=True)
+@click.option("-d", "--database-id", "database_id_opt", type=str)
 @click.option("--config", "config_file", type=click.Path())
 def notion(
-    input_file: click.Path, credential_file: click.Path, database_id: str, config_file: Optional[click.Path]
+    input_file: click.Path, credential_file: click.Path, database_id_opt: str, config_file: Optional[click.Path]
 ) -> None:
     """
     Create or update one or more rows in a Notion database.
@@ -235,6 +235,16 @@ def notion(
             "No Notion key specified (checked config file, environment variable NIGHTSHADE_NOTION_KEY, and command line arguments",
             file=sys.stderr,
         )
+        sys.exit(1)
+
+    # Get the Notion database identifier, either from the config file or the
+    # command line.
+    database_id = config.get("database_id")
+    if database_id_opt:
+        database_id = database_id_opt
+
+    if database_id is None:
+        print("No database ID specified (checked config file and command line arguments)", file=sys.stderr)
         sys.exit(1)
 
     # Update the session object with the necessary headers.
