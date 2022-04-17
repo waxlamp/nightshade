@@ -48,10 +48,29 @@ def search(
         # results".
         matches = [get_movie_data(url)]
 
-    # Print the matches.
+    # Print the matches and store the canonicalized data in an array.
+    selections = []
     for movie in matches:
         data = get_movie_data(movie.href).dict()
         data["notes"] = notes
         data["original"] = search_phrase or ""
 
-        print(json.dumps(data))
+        selections.append(data)
+
+        print(json.dumps(data), file=sys.stderr)
+
+    # Ask the user to confirm which entry is the one to use.
+    which = -1
+    while not 0 <= which < len(matches):
+        text = input("Which entry ('q' to quit; enter to select the first one)? ")
+        if text == "q":
+            sys.exit(1)
+        elif text == "":
+            text = "0"
+
+        try:
+            which = int(text)
+        except ValueError:
+            continue
+
+    print(json.dumps(selections[which]))
