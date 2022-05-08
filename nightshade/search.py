@@ -16,6 +16,42 @@ def display(m: MovieData) -> str:
         Runtime: {m.runtime} minutes"""
 
 
+def process_matches(matches, notes, search_phrase, instream):
+    # Exit early if there were no results.
+    if not matches:
+        print("No movies matched.", file=sys.stderr)
+        return
+
+    # Print the matches and store the canonicalized data in an array.
+    selections = []
+    for index, movie in enumerate(matches):
+        data = get_movie_data(movie.href)
+        print(f"({index + 1}) {display(data)}", file=sys.stderr)
+
+        datadict = data.dict()
+        datadict["notes"] = notes
+        datadict["original"] = search_phrase or ""
+
+        selections.append(datadict)
+
+    # Ask the user to confirm which entry is the one to use.
+    which = -1
+    while not 0 <= which < len(matches):
+        print("Which entry ('s' to skip; enter to select the first one)? ", end="", flush=True, file=sys.stderr)
+        text = instream.readline().strip()
+        if text == "s":
+            return
+        elif text == "":
+            text = "1"
+
+        try:
+            which = int(text) - 1
+        except ValueError:
+            continue
+
+    print(json.dumps(selections[which]))
+
+
 @click.command()
 @click.option("-s", "--search-phrase", required=False)
 @click.option("-y", "--year", required=False, type=int)
@@ -40,8 +76,38 @@ def search(
 
     matches = []
     if search_phrase is None and url is None:
-        print("At least one of SEARCH_PHRASE or URL must be specified", file=sys.stderr)
-        sys.exit(1)
+        # Attempt to open the TTY.
+        try:
+            tty = open("/dev/tty")
+        except OSError:
+            tty = os.fdopen(2)
+
+        spacer = ""
+        for inputline in (x.strip() for x in sys.stdin):
+            print(f"{spacer}processing search string '{inputline}'...", file=sys.stderr)
+            spacer = "\n"
+
+            components = inputline.split(";")
+            search_phrase = components[0]
+            try:
+                year = int(components[1]) if len(components) > 1 else None
+            except ValueError:
+                print(f"error: value '{components[1]}' for year much be an integer", file=sys.stderr)
+                continue
+
+            url = components[2] if len(components) > 2 else None
+
+            movies = get_movies(search_phrase)
+            matches = match_movie(movies, search_phrase, year)
+
+            if url:
+                matches = [
+                    m for m in matches if m.href == url and (year is None or m.year == year)
+                ]
+
+            process_matches(matches, notes, search_phrase or url, tty)
+
+        sys.exit(0)
     elif search_phrase:
         # If there's a search phrase, run the search.
         movies = get_movies(search_phrase)
@@ -58,35 +124,4 @@ def search(
         # results".
         matches = [get_movie_data(url)]
 
-    # Exit early if there were no results.
-    if not matches:
-        print("No movies matched.", file=sys.stderr)
-        sys.exit(1)
-
-    # Print the matches and store the canonicalized data in an array.
-    selections = []
-    for index, movie in enumerate(matches):
-        data = get_movie_data(movie.href)
-        print(f"({index + 1}) {display(data)}", file=sys.stderr)
-
-        datadict = data.dict()
-        datadict["notes"] = notes
-        datadict["original"] = search_phrase or ""
-
-        selections.append(datadict)
-
-    # Ask the user to confirm which entry is the one to use.
-    which = -1
-    while not 0 <= which < len(matches):
-        text = input("Which entry ('q' to quit; enter to select the first one)? ")
-        if text == "q":
-            sys.exit(1)
-        elif text == "":
-            text = "1"
-
-        try:
-            which = int(text) - 1
-        except ValueError:
-            continue
-
-    print(json.dumps(selections[which]))
+    process_matches(matches, notes, search_phrase or url, sys.stdin)
