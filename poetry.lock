@@ -349,6 +349,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-pyyaml"
+version = "6.0.7"
+description = "Typing stubs for PyYAML"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-requests"
 version = "2.26.2"
 description = "Typing stubs for requests"
@@ -380,7 +388,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "0a27359ce080a2a8408da3c6b2dfa540e7f2d99e6c6fbcb33e16a6cf4a317fc1"
+content-hash = "cef5c0bdd1f768d9b7cdd01b0ce133af01b66e6e2892395215ea5fb7a5f9483d"
 
 [metadata.files]
 appdirs = [
@@ -673,6 +681,10 @@ tqdm = [
 types-beautifulsoup4 = [
     {file = "types-beautifulsoup4-4.10.5.tar.gz", hash = "sha256:9e8c8d8c30e74bcfe65da58e797e7fb9411f8f90d98b6c6c6534f96250e4cd5f"},
     {file = "types_beautifulsoup4-4.10.5-py3-none-any.whl", hash = "sha256:7669f392a89b1276fcaa933d2f12e011a06b5b5c4bf88151dfcb215b89185749"},
+]
+types-pyyaml = [
+    {file = "types-PyYAML-6.0.7.tar.gz", hash = "sha256:59480cf44595d836aaae050f35e3c39f197f3a833679ef3978d97aa9f2fb7def"},
+    {file = "types_PyYAML-6.0.7-py3-none-any.whl", hash = "sha256:7b273a34f32af9910cf9405728c9d2ad3afc4be63e4048091a1a73d76681fe67"},
 ]
 types-requests = [
     {file = "types-requests-2.26.2.tar.gz", hash = "sha256:0e22d9cdeff4c3eb068eb883d59b127c98d80525f3d0412a1c4499c6ae1f711e"},
