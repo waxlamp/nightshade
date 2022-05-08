@@ -48,6 +48,11 @@ def search(
         # results".
         matches = [get_movie_data(url)]
 
+    # Exit early if there were no results.
+    if not matches:
+        print("No movies matched.", file=sys.stderr)
+        sys.exit(1)
+
     # Print the matches and store the canonicalized data in an array.
     selections = []
     for movie in matches:
