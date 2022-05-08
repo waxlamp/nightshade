@@ -13,6 +13,7 @@ nltk = "^3.6.5"
 pydantic = "^1.8.2"
 click = "^8.0.3"
 PyYAML = "^6.0"
+types-PyYAML = "^6.0.7"
 
 [tool.poetry.dev-dependencies]
 black = "21.7b"

@@ -214,16 +214,22 @@ def notion(
     """
 
     # Read in the config.
-    config_path = (
-        config_file
-        or pathlib.Path(os.getenv("HOME")) / ".config" / "nightshade" / "config.yaml"
-    )
-    try:
-        with open(config_path) as f:
-            config = yaml.safe_load(f)
-    except FileNotFoundError:
-        print(f"config file at {config_path} not found", file=sys.stderr)
-        sys.exit(1)
+    config_path = None
+    if config_file:
+        config_path = pathlib.Path(config_file)
+    elif home := os.getenv("HOME"):
+        config_path = pathlib.Path(home) / ".config" / "nightshade" / "config.yaml"
+    else:
+        print(f"warning: no config file specified/found", file=sys.stderr)
+
+    config = {}
+    if config_path:
+        try:
+            with open(config_path) as f:
+                config = yaml.safe_load(f)
+        except FileNotFoundError:
+            print(f"config file at {config_path} not found", file=sys.stderr)
+            sys.exit(1)
 
     # Check for Notion credentials. Start with the config file, and override
     # through the environment variable and the command line option.
