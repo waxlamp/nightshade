@@ -72,6 +72,12 @@ def search(
     result's title and year also match the ones provided. An optional NOTES will
     append that content to the Notion entry (if the output is passed to
     `nightshade notion`).
+
+    If SEARCH_PHRASE, YEAR, and URL are not passed via the command line
+    arguments, then searches will be conducted from standard input. Each line
+    will be parsed as containing a search phrase, year, and URL separated by
+    semicolons; only the search phrase or URL are required (as described above
+    in "single search" mode).
     """
 
     matches = []
