@@ -4,6 +4,7 @@ import nltk
 from .notion import notion
 from .csv import csv
 from .search import search
+from .tmdb import tmdb
 
 
 @click.group()
@@ -28,3 +29,4 @@ nightshade.add_command(search)
 nightshade.add_command(prep)
 nightshade.add_command(notion)
 nightshade.add_command(csv)
+nightshade.add_command(tmdb)

@@ -14,3 +14,9 @@ class MovieData(MovieResult):
     rating: Optional[str]
     genres: List[str]
     runtime: Optional[int]
+
+class TMDBSearchResult(pydantic.BaseModel):
+    id: int
+    title: str
+    release_date: str
+    overview: str
