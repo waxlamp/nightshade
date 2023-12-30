@@ -7,7 +7,7 @@ import textwrap
 
 from typing import List, Optional
 
-from .models import TMDBSearchResult
+from .models import TMDBSearchResult, TMDBMovie
 
 
 def display(s: TMDBSearchResult, idx: int) -> str:
@@ -17,6 +17,19 @@ def display(s: TMDBSearchResult, idx: int) -> str:
 
     return f"""({idx}) {s.title} ({release_year})
 {wrapped_overview}"""
+
+
+def get_movie_detail(detail) -> TMDBMovie:
+    return TMDBMovie(
+        id=detail["id"],
+        genres=(x["name"] for x in detail["genres"]),
+        overview=detail["overview"],
+        release_date=detail["release_date"],
+        runtime=detail["runtime"],
+        title=detail["title"],
+        vote_average=detail["vote_average"],
+        vote_count=detail["vote_count"],
+    )
 
 
 @click.command()
@@ -64,4 +77,7 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
         except ValueError:
             continue
 
-    print(search_results[which].id)
+    detail_url = f"https://api.themoviedb.org/3/movie/{search_results[which].id}"
+    resp = s.get(detail_url).json()
+    detail = get_movie_detail(resp)
+    print(detail)

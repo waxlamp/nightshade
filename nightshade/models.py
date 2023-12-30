@@ -15,8 +15,20 @@ class MovieData(MovieResult):
     genres: List[str]
     runtime: Optional[int]
 
+
 class TMDBSearchResult(pydantic.BaseModel):
     id: int
     title: str
     release_date: str
     overview: str
+
+
+class TMDBMovie(pydantic.BaseModel):
+    id: int
+    genres: List[str]
+    overview: str
+    release_date: str
+    runtime: int
+    title: str
+    vote_average: float
+    vote_count: int
