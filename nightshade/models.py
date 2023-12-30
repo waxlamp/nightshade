@@ -30,5 +30,6 @@ class TMDBMovie(pydantic.BaseModel):
     release_date: str
     runtime: int
     title: str
+    mpaa_rating: Optional[str]
     vote_average: float
     vote_count: int

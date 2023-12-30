@@ -20,6 +20,19 @@ def display(s: TMDBSearchResult, idx: int) -> str:
 
 
 def get_movie_detail(detail) -> TMDBMovie:
+    release_dates = detail["release_dates"]["results"]
+    us_release_dates = [x for x in release_dates if x["iso_3166_1"] == "US"]
+    mpaa_rating = None
+    if len(us_release_dates) == 1:
+        wide_release = [x for x in us_release_dates[0]["release_dates"] if x["release_date"][:10] == detail["release_date"]]
+
+        if len(wide_release) == 1:
+            mpaa_rating = wide_release[0]["certification"]
+        else:
+            raise RuntimeError("multiple wide release dates")
+    else:
+        raise RuntimeError("more than one US release record")
+
     return TMDBMovie(
         id=detail["id"],
         genres=(x["name"] for x in detail["genres"]),
@@ -27,6 +40,7 @@ def get_movie_detail(detail) -> TMDBMovie:
         release_date=detail["release_date"],
         runtime=detail["runtime"],
         title=detail["title"],
+        mpaa_rating=mpaa_rating,
         vote_average=detail["vote_average"],
         vote_count=detail["vote_count"],
     )
@@ -78,6 +92,6 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
             continue
 
     detail_url = f"https://api.themoviedb.org/3/movie/{search_results[which].id}"
-    resp = s.get(detail_url).json()
+    resp = s.get(detail_url, params={"append_to_response": "release_dates"}).json()
     detail = get_movie_detail(resp)
-    print(detail)
+    pprint(detail)
