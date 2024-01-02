@@ -103,7 +103,6 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
     detail_url = f"https://api.themoviedb.org/3/movie/{search_results[which].id}"
     resp = s.get(detail_url, params={"append_to_response": "release_dates"}).json()
     movie = get_movie_detail(resp)
-    pprint(movie)
 
     s = requests.Session()
     s.headers.update({
@@ -111,6 +110,25 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json",
     })
+
+    resp = s.post(f"https://api.notion.com/v1/databases/{database_id}/query", data=json.dumps({
+        "filter": {
+            "property": "TMDB ID",
+            "number": {
+                "equals": movie.id,
+            },
+        },
+    }))
+
+    results = resp.json()["results"]
+    if len(results) == 1:
+        print(f"error: movie is already in database (TMDB ID: {movie.id}, {results[0].url})", file=sys.stderr)
+        sys.exit(1)
+    elif len(results) > 1:
+        print(f"error: movie is already in database, with duplicates (TMDB ID: {movie.id})", file=sys.stderr)
+        for r in results:
+            print(r["url"], file=sys.stderr)
+        sys.exit(1)
 
     properties = {
         "Title": {
