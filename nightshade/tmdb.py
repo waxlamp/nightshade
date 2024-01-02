@@ -1,4 +1,5 @@
 import click
+import json
 import os
 from pprint import pprint
 import requests
@@ -56,6 +57,14 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
         print("fatal: environment variable TMDB_READ_TOKEN is required", file=sys.stderr)
         sys.exit(1)
 
+    if (notion_key := os.getenv("NOTION_KEY")) is None:
+        print("fatal: environment variable NOTION_KEY is required", file=sys.stderr)
+        sys.exit(1)
+
+    if (database_id := os.getenv("DATABASE_ID")) is None:
+        print("fatal: environment variable DATABASE_ID is required", file=sys.stderr)
+        sys.exit(1)
+
     s = requests.Session()
     s.headers.update({
         "accept": "application/json",
@@ -93,5 +102,68 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
 
     detail_url = f"https://api.themoviedb.org/3/movie/{search_results[which].id}"
     resp = s.get(detail_url, params={"append_to_response": "release_dates"}).json()
-    detail = get_movie_detail(resp)
-    pprint(detail)
+    movie = get_movie_detail(resp)
+    pprint(movie)
+
+    s = requests.Session()
+    s.headers.update({
+        "Authorization": f"Bearer {notion_key}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
+    })
+
+    properties = {
+        "Title": {
+            "title": [
+                {
+                    "type": "text",
+                    "text": {
+                        "content": movie.title,
+                    },
+                },
+            ],
+        },
+        "Release Date": {
+            "date": {
+                "start": movie.release_date,
+            },
+        },
+        "Genre": {
+            "multi_select": [
+                { "name": tag } for tag in movie.genres
+            ],
+        },
+        "Score": {
+            "number": movie.vote_average,
+        },
+        "Vote Count": {
+            "number": movie.vote_count,
+        },
+        "Runtime": {
+            "number": movie.runtime,
+        },
+        "TMDB ID": {
+            "number": movie.id,
+        },
+    }
+
+    if movie.mpaa_rating is not None:
+        properties["MPAA Rating"] = {
+            "select": {
+                "name": movie.mpaa_rating,
+            },
+        }
+
+    result = s.post("https://api.notion.com/v1/pages", data=json.dumps({
+        "parent": {
+            "type": "database_id",
+            "database_id": database_id,
+        },
+        "properties": properties,
+    }))
+
+    if result.status_code != 200:
+        print(result.text, file=sys.stderr)
+        sys.exit(1)
+
+    print(result.json()["url"])
