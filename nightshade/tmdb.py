@@ -83,6 +83,10 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
     resp = s.get(search_url, params=params).json()
     search_results = [TMDBSearchResult(**entry) for entry in resp["results"]]
 
+    if not search_results:
+        print("No search results found", file=sys.stderr)
+        sys.exit(1)
+
     for idx, result in enumerate(search_results):
         print(display(result, idx))
         print()
