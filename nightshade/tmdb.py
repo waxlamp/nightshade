@@ -52,7 +52,8 @@ def get_movie_detail(detail) -> TMDBMovie:
 @click.option("-y", "--year", required=False, type=int)
 @click.option("--dry-run", is_flag=True)
 @click.option("--exact-match", is_flag=True)
-def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool) -> None:
+@click.option("--interactive/--non-interactive", default=True)
+def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool, interactive: bool) -> None:
     q = " ".join(query)
 
     if (tmdb_read_token := os.getenv("TMDB_READ_TOKEN")) is None:
@@ -96,18 +97,20 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
         print(display(result, idx))
         print()
 
-    which = -1
-    while not 0 <= which < len(search_results):
-        print("Which entry (enter to select the first one)? ", end="", flush=True, file=sys.stderr)
+    which = 0
+    if interactive:
+        which = -1
+        while not 0 <= which < len(search_results):
+            print("Which entry (enter to select the first one)? ", end="", flush=True, file=sys.stderr)
 
-        text = sys.stdin.readline().strip()
-        if text == "":
-            text = "0"
+            text = sys.stdin.readline().strip()
+            if text == "":
+                text = "0"
 
-        try:
-            which = int(text)
-        except ValueError:
-            continue
+            try:
+                which = int(text)
+            except ValueError:
+                continue
 
     detail_url = f"https://api.themoviedb.org/3/movie/{search_results[which].id}"
     resp = s.get(detail_url, params={"append_to_response": "release_dates"}).json()
