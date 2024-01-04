@@ -50,7 +50,8 @@ def get_movie_detail(detail) -> TMDBMovie:
 @click.command()
 @click.argument("query", nargs=-1, required=True)
 @click.option("-y", "--year", required=False, type=int)
-def tmdb(query: List[str], year: Optional[int]) -> None:
+@click.option("--dry-run", is_flag=True)
+def tmdb(query: List[str], year: Optional[int], dry_run: bool) -> None:
     q = " ".join(query)
 
     if (tmdb_read_token := os.getenv("TMDB_READ_TOKEN")) is None:
@@ -107,6 +108,10 @@ def tmdb(query: List[str], year: Optional[int]) -> None:
     detail_url = f"https://api.themoviedb.org/3/movie/{search_results[which].id}"
     resp = s.get(detail_url, params={"append_to_response": "release_dates"}).json()
     movie = get_movie_detail(resp)
+
+    if dry_run:
+        print(movie)
+        sys.exit(0)
 
     s = requests.Session()
     s.headers.update({
