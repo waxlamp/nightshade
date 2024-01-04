@@ -51,7 +51,8 @@ def get_movie_detail(detail) -> TMDBMovie:
 @click.argument("query", nargs=-1, required=True)
 @click.option("-y", "--year", required=False, type=int)
 @click.option("--dry-run", is_flag=True)
-def tmdb(query: List[str], year: Optional[int], dry_run: bool) -> None:
+@click.option("--exact-match", is_flag=True)
+def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool) -> None:
     q = " ".join(query)
 
     if (tmdb_read_token := os.getenv("TMDB_READ_TOKEN")) is None:
@@ -83,6 +84,9 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool) -> None:
         params["primary_release_year"] = str(year)
     resp = s.get(search_url, params=params).json()
     search_results = [TMDBSearchResult(**entry) for entry in resp["results"]]
+
+    if exact_match:
+        search_results = [s for s in search_results if s.title.lower() == q.lower()]
 
     if not search_results:
         print("No search results found", file=sys.stderr)
