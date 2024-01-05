@@ -28,7 +28,7 @@ def get_movie_detail(detail) -> TMDBMovie:
         wide_release = [x for x in us_release_dates[0]["release_dates"] if x["release_date"][:10] == detail["release_date"]]
 
         if len(wide_release) == 1:
-            mpaa_rating = wide_release[0]["certification"]
+            mpaa_rating = wide_release[0]["certification"] or "NR"
         else:
             raise RuntimeError("multiple wide release dates")
     else:
