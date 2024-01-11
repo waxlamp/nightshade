@@ -92,9 +92,6 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
     resp = s.get(search_url, params=params).json()
     search_results = [TMDBSearchResult(**entry) for entry in resp["results"]]
 
-    if exact_match:
-        search_results = [s for s in search_results if s.title.lower() == q.lower()]
-
     if not search_results:
         print("No search results found", file=sys.stderr)
         sys.exit(1)
@@ -102,6 +99,12 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
     for idx, result in enumerate(search_results):
         print(display(result, idx))
         print()
+
+    if exact_match:
+        search_results = [s for s in search_results if s.title.lower() == q.lower()]
+        if not interactive and len(search_results) > 1:
+            print("Multiple exact matches found in non-interactive mode")
+            sys.exit(1)
 
     which = 0
     if interactive:
