@@ -20,17 +20,23 @@ def display(s: TMDBSearchResult, idx: int) -> str:
 {wrapped_overview}"""
 
 
+def rating_comparator(x):
+    rating_values = {
+        "NR": 0,
+        "G": 1,
+        "PG": 2,
+        "PG-13": 3,
+        "R": 4,
+        "NC-17": 5,
+    }
+
+    return rating_values[x]
+
 def get_movie_detail(detail) -> TMDBMovie:
     release_dates = detail["release_dates"]["results"]
     us_release_dates = [x for x in release_dates if x["iso_3166_1"] == "US"]
-    mpaa_rating = None
     if len(us_release_dates) == 1:
-        wide_release = [x for x in us_release_dates[0]["release_dates"] if x["release_date"][:10] == detail["release_date"]]
-
-        if len(wide_release) == 1:
-            mpaa_rating = wide_release[0]["certification"] or "NR"
-        else:
-            raise RuntimeError("multiple wide release dates")
+        mpaa_rating = max((x["certification"] or "NR" for x in us_release_dates[0]["release_dates"]), key=rating_comparator)
     else:
         raise RuntimeError("more than one US release record")
 
