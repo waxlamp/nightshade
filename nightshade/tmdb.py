@@ -101,7 +101,7 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
     if exact_match:
         search_results = [s for s in search_results if s.title.lower() == q.lower()]
         if not interactive and len(search_results) > 1:
-            print("Multiple exact matches found in non-interactive mode")
+            print("Multiple exact matches found in non-interactive mode", file=sys.stderr)
             sys.exit(1)
 
     if not search_results:
