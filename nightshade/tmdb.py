@@ -81,6 +81,7 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
     })
 
     search_url = "https://api.themoviedb.org/3/search/movie"
+    coll_search_url = "https://api.themoviedb.org/3/search/collection"
     params={
         "query": q,
         "include_adult": False,
@@ -90,7 +91,9 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
     if year is not None:
         params["primary_release_year"] = str(year)
     resp = s.get(search_url, params=params).json()
-    search_results = [TMDBSearchResult(**entry) for entry in resp["results"]]
+    coll_resp = s.get(coll_search_url, params=params).json()
+    collections = {x["id"] for x in coll_resp["results"]}
+    search_results = [TMDBSearchResult(**entry) for entry in resp["results"] if entry["id"] not in collections]
 
     if not search_results:
         print("No search results found", file=sys.stderr)
