@@ -105,7 +105,7 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
             sys.exit(1)
 
     if not search_results:
-        print(f"No {'exact' if exact_match else ''} search results found", file=sys.stderr)
+        print(f"No {'exact ' if exact_match else ''}search results found", file=sys.stderr)
         sys.exit(1)
 
     which = 0
