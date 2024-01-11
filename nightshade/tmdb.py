@@ -95,10 +95,6 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
     collections = {x["id"] for x in coll_resp["results"]}
     search_results = [TMDBSearchResult(**entry) for entry in resp["results"] if entry["id"] not in collections]
 
-    if not search_results:
-        print("No search results found", file=sys.stderr)
-        sys.exit(1)
-
     for idx, result in enumerate(search_results):
         print(display(result, idx))
         print()
@@ -108,6 +104,10 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
         if not interactive and len(search_results) > 1:
             print("Multiple exact matches found in non-interactive mode")
             sys.exit(1)
+
+    if not search_results:
+        print(f"No {'exact' if exact_match else ''} search results found", file=sys.stderr)
+        sys.exit(1)
 
     which = 0
     if interactive:
