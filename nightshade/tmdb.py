@@ -138,7 +138,7 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
 
     results = resp.json()["results"]
     if len(results) == 1:
-        print(f"error: movie is already in database (TMDB ID: {movie.id}, {results[0].url})", file=sys.stderr)
+        print(f"error: movie is already in database (TMDB ID: {movie.id}, {results[0]['url']})", file=sys.stderr)
         sys.exit(1)
     elif len(results) > 1:
         print(f"error: movie is already in database, with duplicates (TMDB ID: {movie.id})", file=sys.stderr)
