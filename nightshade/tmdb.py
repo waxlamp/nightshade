@@ -35,10 +35,9 @@ def rating_comparator(x):
 def get_movie_detail(detail) -> TMDBMovie:
     release_dates = detail["release_dates"]["results"]
     us_release_dates = [x for x in release_dates if x["iso_3166_1"] == "US"]
-    if len(us_release_dates) == 1:
-        mpaa_rating = max((x["certification"] or "NR" for x in us_release_dates[0]["release_dates"]), key=rating_comparator)
-    else:
-        raise RuntimeError("more than one US release record")
+    flattened_us_release_dates = sum((x["release_dates"] for x in us_release_dates), [])
+    all_certs = [x["certification"] or "NR" for x in flattened_us_release_dates]
+    mpaa_rating = max(all_certs, key=rating_comparator) if all_certs else "NR"
 
     return TMDBMovie(
         id=detail["id"],
