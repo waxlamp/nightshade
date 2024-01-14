@@ -1,5 +1,4 @@
 import click
-import nltk
 
 from .notion import notion
 from .csv import csv
@@ -13,20 +12,7 @@ def nightshade() -> None:
     pass
 
 
-@click.command()
-def prep() -> None:
-    """
-    Download tokenization models for use in `search` command.
-
-    You will only need to run this subcommand at most one time (if the
-    `nightshade search` command fails with an error about a missing NLTK
-    model).
-    """
-    nltk.download("punkt")
-
-
 nightshade.add_command(search)
-nightshade.add_command(prep)
 nightshade.add_command(notion)
 nightshade.add_command(csv)
 nightshade.add_command(tmdb)
