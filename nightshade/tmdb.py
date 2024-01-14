@@ -107,8 +107,8 @@ def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool
         sys.exit(1)
 
     for idx, result in enumerate(search_results):
-        print(display(result, idx))
-        print()
+        print(display(result, idx), file=sys.stderr)
+        print(file=sys.stderr)
 
     which = 0
     if interactive:
