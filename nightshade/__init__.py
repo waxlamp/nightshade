@@ -5,7 +5,7 @@ from .tmdb import tmdb
 
 @click.group()
 def nightshade() -> None:
-    """A command suite for interacting with Rotten Tomatoes."""
+    """A command suite for interacting with TMDB and Notion databases."""
     pass
 
 
