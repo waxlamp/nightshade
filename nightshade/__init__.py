@@ -1,6 +1,5 @@
 import click
 
-from .search import search
 from .tmdb import tmdb
 
 
@@ -10,5 +9,4 @@ def nightshade() -> None:
     pass
 
 
-nightshade.add_command(search)
 nightshade.add_command(tmdb)
