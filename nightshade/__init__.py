@@ -1,6 +1,5 @@
 import click
 
-from .csv import csv
 from .search import search
 from .tmdb import tmdb
 
@@ -12,5 +11,4 @@ def nightshade() -> None:
 
 
 nightshade.add_command(search)
-nightshade.add_command(csv)
 nightshade.add_command(tmdb)
