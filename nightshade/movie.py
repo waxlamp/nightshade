@@ -58,7 +58,7 @@ def get_movie_detail(detail) -> TMDBMovie:
 @click.option("--dry-run", is_flag=True)
 @click.option("--exact-match", is_flag=True)
 @click.option("--interactive/--non-interactive", default=True)
-def tmdb(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool, interactive: bool) -> None:
+def movie(query: List[str], year: Optional[int], dry_run: bool, exact_match: bool, interactive: bool) -> None:
     q = " ".join(query)
 
     if (tmdb_read_token := os.getenv("TMDB_READ_TOKEN")) is None:

@@ -1,12 +1,12 @@
 import click
 
-from .tmdb import tmdb
+from .movie import movie
 
 
 @click.group()
 def nightshade() -> None:
-    """A command suite for interacting with TMDB and Notion databases."""
+    """A command suite for building movie, TV show, and book databases in Notion."""
     pass
 
 
-nightshade.add_command(tmdb)
+nightshade.add_command(movie)
