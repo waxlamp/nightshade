@@ -133,6 +133,11 @@ class NotionClient(object):
             "Vote Count": {
                 "number": movie.vote_count,
             },
+            "MPAA Rating": {
+                "select": {
+                    "name": movie.mpaa_rating,
+                },
+            },
             "Runtime": {
                 "number": movie.runtime,
             },
@@ -140,13 +145,6 @@ class NotionClient(object):
                 "number": movie.id,
             },
         }
-
-        if movie.mpaa_rating is not None:
-            properties["MPAA Rating"] = {
-                "select": {
-                    "name": movie.mpaa_rating,
-                },
-            }
 
         body = {
             "parent": {
