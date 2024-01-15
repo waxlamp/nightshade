@@ -165,8 +165,7 @@ def display(s: TMDBSearchResult, idx: int) -> str:
     spacer = " " * 8
     wrapped_overview = textwrap.fill(s.overview, initial_indent=spacer, subsequent_indent=spacer)
 
-    return f"""({idx}) {s.title} ({release_year})
-{wrapped_overview}"""
+    return f"({idx}) {s.title} ({release_year})\n{wrapped_overview}"
 
 
 @click.command()
