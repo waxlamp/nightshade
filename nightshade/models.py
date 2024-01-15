@@ -2,15 +2,20 @@ import pydantic
 from typing import List, Optional
 
 
-class MovieResult(pydantic.BaseModel):
-    year: Optional[int]
+class TMDBSearchResult(pydantic.BaseModel):
+    id: int
     title: str
-    href: pydantic.HttpUrl
+    release_date: str
+    overview: str
 
 
-class MovieData(MovieResult):
-    audience: Optional[int]
-    tomatometer: Optional[int]
-    rating: Optional[str]
+class TMDBMovie(pydantic.BaseModel):
+    id: int
     genres: List[str]
-    runtime: Optional[int]
+    overview: str
+    release_date: str
+    runtime: int
+    title: str
+    mpaa_rating: str
+    vote_average: float
+    vote_count: int
