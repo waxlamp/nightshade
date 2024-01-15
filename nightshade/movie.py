@@ -43,7 +43,7 @@ class TMDBClient(object):
 
         return search_results
 
-    def movie_detail(self, *, tmdb_id: int):
+    def movie_detail(self, *, tmdb_id: int) -> TMDBMovie:
         url = f"https://api.themoviedb.org/3/movie/{tmdb_id}"
 
         detail = self.session.get(url, params={"append_to_response": "release_dates"}).json()
@@ -77,6 +77,89 @@ class TMDBClient(object):
             vote_average=detail["vote_average"],
             vote_count=detail["vote_count"],
         )
+
+
+class NotionClient(object):
+    def __init__(self, *, notion_key: str, database_id: str):
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Authorization": f"Bearer {notion_key}",
+            "Notion-Version": "2022-06-28",
+            "Content-Type": "application/json",
+        })
+
+        self.database_id = database_id
+
+    def find_by_id(self, *, tmdb_id: int):
+        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        body = {
+            "filter": {
+                "property": "TMDB ID",
+                "number": {
+                    "equals": tmdb_id,
+                },
+            },
+        }
+
+        return self.session.post(url, data=json.dumps(body)).json()["results"]
+
+    def create_movie_row(self, *, movie: TMDBMovie):
+        url = "https://api.notion.com/v1/pages"
+
+        properties = {
+            "Title": {
+                "title": [
+                    {
+                        "type": "text",
+                        "text": {
+                            "content": movie.title,
+                        },
+                    },
+                ],
+            },
+            "Release Date": {
+                "date": {
+                    "start": movie.release_date,
+                },
+            },
+            "Genre": {
+                "multi_select": [
+                    { "name": tag } for tag in movie.genres
+                ],
+            },
+            "Score": {
+                "number": movie.vote_average,
+            },
+            "Vote Count": {
+                "number": movie.vote_count,
+            },
+            "Runtime": {
+                "number": movie.runtime,
+            },
+            "TMDB ID": {
+                "number": movie.id,
+            },
+        }
+
+        if movie.mpaa_rating is not None:
+            properties["MPAA Rating"] = {
+                "select": {
+                    "name": movie.mpaa_rating,
+                },
+            }
+
+        body = {
+            "parent": {
+                "type": "database_id",
+                "database_id": self.database_id,
+            },
+            "properties": properties,
+        }
+
+        resp = self.session.post(url, data=json.dumps(body))
+        resp.raise_for_status()
+
+        return resp.json()
 
 
 def display(s: TMDBSearchResult, idx: int) -> str:
@@ -158,84 +241,22 @@ def movie(query: List[str], year: Optional[int], dry_run: bool, exact_match: boo
         print(movie)
         sys.exit(0)
 
-    s = requests.Session()
-    s.headers.update({
-        "Authorization": f"Bearer {notion_key}",
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json",
-    })
+    # Instantiate a Notion client.
+    notion_client = NotionClient(notion_key=notion_key, database_id=database_id)
 
-    resp = s.post(f"https://api.notion.com/v1/databases/{database_id}/query", data=json.dumps({
-        "filter": {
-            "property": "TMDB ID",
-            "number": {
-                "equals": movie.id,
-            },
-        },
-    }))
+    # Look for the same movie already in the database.
+    dupes = notion_client.find_by_id(tmdb_id=movie.id)
 
-    results = resp.json()["results"]
-    if len(results) == 1:
-        print(f"error: movie is already in database (TMDB ID: {movie.id}, {results[0]['url']})", file=sys.stderr)
+    if len(dupes) == 1:
+        print(f"error: movie is already in database (TMDB ID: {movie.id}, {dupes[0]['url']})", file=sys.stderr)
         sys.exit(1)
-    elif len(results) > 1:
+    elif len(dupes) > 1:
         print(f"error: movie is already in database, with duplicates (TMDB ID: {movie.id})", file=sys.stderr)
-        for r in results:
-            print(r["url"], file=sys.stderr)
+        for dupe in dupes:
+            print(dupe["url"], file=sys.stderr)
         sys.exit(1)
 
-    properties = {
-        "Title": {
-            "title": [
-                {
-                    "type": "text",
-                    "text": {
-                        "content": movie.title,
-                    },
-                },
-            ],
-        },
-        "Release Date": {
-            "date": {
-                "start": movie.release_date,
-            },
-        },
-        "Genre": {
-            "multi_select": [
-                { "name": tag } for tag in movie.genres
-            ],
-        },
-        "Score": {
-            "number": movie.vote_average,
-        },
-        "Vote Count": {
-            "number": movie.vote_count,
-        },
-        "Runtime": {
-            "number": movie.runtime,
-        },
-        "TMDB ID": {
-            "number": movie.id,
-        },
-    }
-
-    if movie.mpaa_rating is not None:
-        properties["MPAA Rating"] = {
-            "select": {
-                "name": movie.mpaa_rating,
-            },
-        }
-
-    result = s.post("https://api.notion.com/v1/pages", data=json.dumps({
-        "parent": {
-            "type": "database_id",
-            "database_id": database_id,
-        },
-        "properties": properties,
-    }))
-
-    if result.status_code != 200:
-        print(result.text, file=sys.stderr)
-        sys.exit(1)
-
-    print(result.json()["url"])
+    # Create a row for the movie in the Notion database and output the URL for
+    # it.
+    new_row = notion_client.create_movie_row(movie=movie)
+    print(new_row["url"])
