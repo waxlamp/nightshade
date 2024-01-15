@@ -1,2 +1,2 @@
 # nightshade
-Tools for retrieving movie data from TMDB and store it in a Notion database.
+Tools for retrieving movie data from TMDB and storing it in a Notion database.
