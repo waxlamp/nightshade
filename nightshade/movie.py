@@ -245,15 +245,10 @@ def movie(query: List[str], year: Optional[int], dry_run: bool, exact_match: boo
     notion_client = NotionClient(notion_key=notion_key, database_id=database_id)
 
     # Look for the same movie already in the database.
-    dupes = notion_client.find_by_id(tmdb_id=movie.id)
-
-    if len(dupes) == 1:
-        print(f"error: movie is already in database (TMDB ID: {movie.id}, {dupes[0]['url']})", file=sys.stderr)
-        sys.exit(1)
-    elif len(dupes) > 1:
-        print(f"error: movie is already in database, with duplicates (TMDB ID: {movie.id})", file=sys.stderr)
+    if (dupes := notion_client.find_by_id(tmdb_id=movie.id)):
+        print(f"error: movie is already in database (TMDB ID: {movie.id})", file=sys.stderr)
         for dupe in dupes:
-            print(dupe["url"], file=sys.stderr)
+            print(f"    {dupe['url']}", file=sys.stderr)
         sys.exit(1)
 
     # Create a row for the movie in the Notion database and output the URL for
