@@ -6,7 +6,7 @@ import requests
 import sys
 import textwrap
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from .models import TMDBSearchResult, TMDBMovie
 
@@ -48,23 +48,7 @@ class TMDBClient(object):
 
         detail = self.session.get(url, params={"append_to_response": "release_dates"}).json()
 
-        def rating_comparator(x):
-            rating_values = {
-                "NR": 0,
-                "G": 1,
-                "PG": 2,
-                "PG-13": 3,
-                "R": 4,
-                "NC-17": 5,
-            }
-
-            return rating_values[x]
-
-        release_dates = detail["release_dates"]["results"]
-        us_release_dates = [x for x in release_dates if x["iso_3166_1"] == "US"]
-        flattened_us_release_dates = sum((x["release_dates"] for x in us_release_dates), [])
-        all_certs = [x["certification"] or "NR" for x in flattened_us_release_dates]
-        mpaa_rating = max(all_certs, key=rating_comparator) if all_certs else "NR"
+        mpaa_rating = self.mpaa_rating(detail["release_dates"]["results"])
 
         return TMDBMovie(
             id=detail["id"],
@@ -77,6 +61,32 @@ class TMDBClient(object):
             vote_average=detail["vote_average"],
             vote_count=detail["vote_count"],
         )
+
+    @staticmethod
+    def mpaa_rating(release_dates) -> Literal["NR", "G", "PG", "PG-13", "R", "NC-17"]:
+        # Define a comparator for MPAA ratings.
+        def mpaa_comparator(x):
+            rating_values = {
+                "NR": 0,
+                "G": 1,
+                "PG": 2,
+                "PG-13": 3,
+                "R": 4,
+                "NC-17": 5,
+            }
+
+            return rating_values[x]
+
+        # Extract the U.S. release dates.
+        us_release_dates = [x for x in release_dates if x["iso_3166_1"] == "US"]
+        us_release_dates = sum((x["release_dates"] for x in us_release_dates), [])
+
+        # Collect the certification values from each release (subbing "NR" as a
+        # default value).
+        certs = [x["certification"] or "NR" for x in us_release_dates]
+
+        # Take the "worst" certification as the representative for the movie.
+        return max(certs, key=mpaa_comparator) if certs else "NR"
 
 
 class NotionClient(object):
